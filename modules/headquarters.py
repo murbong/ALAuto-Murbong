@@ -18,35 +18,35 @@ class HeadquartersModule(object):
         self.config = config
         self.stats = stats
         self.region = {
-            'hq_tab': Region(745, 1000, 205, 65),
+            'hq_tab': Region(734, 979, 218, 78),
             'tap_out': Region(760, 865, 380, 105),
-            'dorm_tab': Region(845, 390, 260, 295),
-            'academy_tab': Region(255, 390, 260, 295),
+            'dorm_tab': Region(534, 558, 260, 295),
+            'academy_tab': Region(232, 578, 260, 295),
             'dorm_back_button': Region(21, 47, 65, 65),
-            'dorm_eye_button': Region(27, 223, 50, 47),
-            'supplies_bar': Region(310, 975, 215, 65),
+            'dorm_eye_button': Region(37, 169, 50, 47),
+            'supplies_bar': Region(345, 980, 215, 65),
             'oxy_cola': Region(470, 580, 105, 90),
             'exit_snacks_menu': Region(900, 880, 380, 135),
             'button_back': Region(48, 43, 76, 76),
             'confirm_dorm_summary': Region(1545, 905, 235, 65),
             'ignore_give_food_button': Region(690, 750, 185, 60),
             'tactical_class_building': Region(1050, 195, 115, 64),
-            'start_lesson_button': Region(1660, 900, 150, 60),
-            'cancel_lesson_button': Region(1345, 900, 170, 60)
+            'start_lesson_button': Region(1590, 900, 150, 60),
+            'cancel_lesson_button': Region(1285, 900, 170, 60)
         }
 
         if self.config.dorm['enabled']:
             self.supply_region = list()
             self.supply_order = list()
-            self.supply_whiteout_threshold = 220
-            self.start_feed_threshold = 0.2
+            self.supply_whiteout_threshold = 120
+            self.start_feed_threshold = 0.5
             self.stop_feed_threshold = 0.8
 
-            gap = 235
+            gap = 195
             supplies = [1000, 2000, 3000, 5000, 10000, 20000]
 
             for i in range(6):
-                self.supply_region.append(Region(450 + i * gap, 520, 100, 100))
+                self.supply_region.append(Region(620 + i * gap, 600, 100, 100))
             for val in config.dorm['AvailableSupplies']:
                 self.supply_order.append(supplies.index(val))
 
@@ -88,9 +88,10 @@ class HeadquartersModule(object):
                 Logger.log_msg("Found dorm alert.")
                 # open the dorm
                 Utils.touch_randomly(self.region["dorm_tab"])
-                Logger.log_debug("Opening tactical class.")
+                Logger.log_debug("Opening dorm.")
                 self.refill_dorm()
-                self.collect_dorm_balloons()
+                #self.collect_dorm_balloons()
+                self.collect_all()
                 Utils.script_sleep(1)
                 Logger.log_msg("Cleaned dorm.")
                 # exit dorm
@@ -119,6 +120,12 @@ class HeadquartersModule(object):
 
         Utils.wait_update_screen(1)
         return True
+
+    def collect_all(self):
+        Utils.script_sleep(1)
+        Utils.wait_update_screen(1)
+        if Utils.find_and_touch("headquarters/dorm_receive", 0.9):
+            Logger.log_msg("Collected all dorm tokens.")
 
     def collect_dorm_balloons(self):
         """"
@@ -204,7 +211,8 @@ class HeadquartersModule(object):
             find_food = False
             for idx in self.supply_order:
                 region = self.supply_region[idx]
-                if Utils.get_region_color_average(region)[2] < self.supply_whiteout_threshold:
+                Logger.log_debug("region color average is {}".format(Utils.get_region_color_average(region)[2]))
+                if Utils.get_region_color_average(region)[2] > self.supply_whiteout_threshold:
                     Utils.touch_randomly(region)
                     find_food = True
                     break
@@ -222,20 +230,21 @@ class HeadquartersModule(object):
 
     def get_dorm_bar_color(self, percentage, corner_bar):
         if corner_bar:
-            x_coord = 45 + int(780 * percentage)
-            y_coord = 1025
+            x_coord = 354 + int(205 * percentage)
+            y_coord = 1031
         else:
-            x_coord = 630 + int(880 * percentage)
-            y_coord = 400
-        return Utils.get_region_color_average(Region(x_coord, y_coord, 10, 10))
+            x_coord = 360 + int(890 * percentage)
+            y_coord = 450
+        return Utils.get_region_color_average(Region(x_coord, y_coord, 2, 2))
 
     def get_dorm_bar_filled(self, percentage, corner_bar=False):
         return not self.get_dorm_bar_empty(percentage, corner_bar)
 
     def get_dorm_bar_empty(self, percentage, corner_bar=False):
         low = np.array([0, 0, 0])
-        high = np.array([255, 20, 128])
+        high = np.array([255, 130, 220])
         col = self.get_dorm_bar_color(percentage, corner_bar)
+        Logger.log_debug("col is {} {}".format(col,(low <= col) & (col <= high)))
         if np.all((low <= col) & (col <= high)):
             return True
         else:
@@ -254,21 +263,22 @@ class HeadquartersModule(object):
 
             if Utils.find_and_touch("menu/button_confirm"):
                 Logger.log_msg("Starting/ending skill levelling session.")
+                Logger.log_debug("{}".format(self.config.academy["skill_book_tier"]))
                 Utils.script_sleep(3.5)
                 continue
             if Utils.find("headquarters/skill_exp_gain"):
                 if Utils.find_and_touch(
-                        "headquarters/t{}_offense_skillbook".format(self.config.academy["skill_book_tier"]), 0.99):
+                        "headquarters/t{}_offense_skillbook".format(self.config.academy["skill_book_tier"]), 0.9,True):
                     # levelling offesinve skill
                     Logger.log_msg("Selected T{} offensive skill book.".format(self.config.academy["skill_book_tier"]))
                     self.stats.increment_offensive_skillbook_used()
                 elif Utils.find_and_touch(
-                        "headquarters/t{}_defense_skillbook".format(self.config.academy["skill_book_tier"]), 0.99):
+                        "headquarters/t{}_defense_skillbook".format(self.config.academy["skill_book_tier"]), 0.9,True):
                     # levelling defesinve skill
                     Logger.log_msg("Selected T{} defensive skill book.".format(self.config.academy["skill_book_tier"]))
                     self.stats.increment_defensive_skillbook_used()
                 elif Utils.find_and_touch(
-                        "headquarters/t{}_support_skillbook".format(self.config.academy["skill_book_tier"]), 0.99):
+                        "headquarters/t{}_support_skillbook".format(self.config.academy["skill_book_tier"]), 0.9,True):
                     # levelling support skill
                     Logger.log_msg("Selected T{} support skill book.".format(self.config.academy["skill_book_tier"]))
                     self.stats.increment_support_skillbook_used()

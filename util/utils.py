@@ -466,7 +466,9 @@ class Utils(object):
         height, width = template.shape[:2]
         value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]
         if value >= similarity:
+            Logger.log_debug("find {}".format(image))
             return Region(location[0], location[1], width, height)
+        Logger.log_debug("can't find {}".format(image))
         return None
 
     @classmethod

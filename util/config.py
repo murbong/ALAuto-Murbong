@@ -229,7 +229,7 @@ class Config(object):
           Logger.log_msg("Validating config")
         self.ok = True
 
-        valid_servers = ['EN', 'JP']
+        valid_servers = ['EN', 'JP', 'KR']
         if self.assets['server'] not in valid_servers:
             if len(valid_servers) < 2:
                 Logger.log_error("Invalid server assets configured. Only {} is supported.".format(''.join(valid_servers)))

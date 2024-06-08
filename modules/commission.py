@@ -19,11 +19,12 @@ class CommissionModule(object):
         self.attempts_count = 0
         self.commission_start_attempts = 0
         self.region = {
-            'left_menu': Region(0, 203, 57, 86),
-            'collect_oil': Region(206, 105, 98, 58),
-            'collect_gold': Region(579, 102, 98, 58),
-            'complete_commission': Region(574, 393, 181, 61),
-            'button_go': Region(574, 393, 181, 61),
+            'left_menu': Region(0, 306, 57, 86),
+            'collect_oil': Region(170, 110, 40, 40),
+            'collect_gold': Region(420, 110, 40, 40),
+            'collect_book': Region(682, 110, 40, 40),
+            'complete_commission': Region(575, 394, 178, 59),
+            'button_go': Region(575, 394, 178, 59),
             'urgent_tab': Region(24, 327, 108, 103),
             'daily_tab': Region(22, 185, 108, 103),
             'last_commission': Region(298, 846, 1478, 146),
@@ -46,16 +47,23 @@ class CommissionModule(object):
         Utils.script_sleep(1)
         Utils.touch_randomly(self.region["collect_oil"])
         Utils.touch_randomly(self.region["collect_gold"])
+        Utils.touch_randomly(self.region["collect_book"])
 
         self.attempts_count = 0
 
         while True:
             Utils.update_screen()
 
-            if Utils.find("commission/button_completed") and (lambda x:x > 332 and x < 511)(Utils.find("commission/button_completed").y):
+            button_completed = Utils.find("commission/button_completed")
+
+            if button_completed and (lambda x:x > 332 and x < 511)(button_completed.y):
                 Logger.log_debug("Found commission complete button.")
                 self.completed_handler()
-            if Utils.find("commission/alert_available", 0.9) and (lambda x:x > 332 and x < 511)(Utils.find("commission/alert_available", 0.9).y):
+
+            alert_available = Utils.find("commission/alert_available", 0.8)
+
+            if alert_available and (lambda x:x > 332 and x < 511)(alert_available.y):
+                Logger.log_debug("the y of region is {}".format(alert_available.y))
                 Logger.log_debug("Found commission available indicator.")
                 if self.attempts_count > 2:
                     Logger.log_msg("Exceeded number of tries allowed. Resuming with other tasks.")
@@ -74,9 +82,14 @@ class CommissionModule(object):
 
                 if self.urgent_handler():
                     self.daily_handler()
+
                 Utils.touch_randomly(self.region["button_back"])
                 continue
-            if Utils.find("commission/button_go") and (lambda x:x > 332 and x < 511)(Utils.find("commission/button_go").y):
+
+            button_go_found = Utils.find("commission/button_go")
+            Logger.log_debug("the y of region is {}".format(button_go_found.y))
+
+            if button_go_found and (lambda x:x > 332 and x < 511)(button_go_found.y):
                 Logger.log_msg("All commissions are running.")
                 Utils.touch_randomly(self.region["dismiss_side_tab"])
                 break

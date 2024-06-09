@@ -109,4 +109,5 @@ venv.bak/
 
 # own files
 config-local.ini
+config.ini
 ascreencap_local

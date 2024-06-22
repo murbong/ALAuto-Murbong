@@ -4,7 +4,7 @@ from modules.commission import CommissionModule
 from modules.headquarters import HeadquartersModule
 from util.config import Config
 
-img = cv2.imread("./Screenshot_2024.06.22_17.14.38.966.png",cv2.IMREAD_COLOR)
+img = cv2.imread("./Screenshot_2024.06.22_16.57.28.732.png",cv2.IMREAD_COLOR)
 
 # template = cv2.imread('assets/KR/commission/button_go.png', cv2.IMREAD_COLOR)
 # a,w,h = template.shape[::-1]
@@ -18,8 +18,8 @@ commisionTest = CommissionModule(config,None)
 
 headquaterTest = HeadquartersModule (config,None)
 
-for region in commisionTest.region:
-    value = commisionTest.region[region]
+for region in headquaterTest.region:
+    value = headquaterTest.region[region]
 
     x = value.x
     y = value.y

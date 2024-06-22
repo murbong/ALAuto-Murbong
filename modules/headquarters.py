@@ -30,8 +30,10 @@ class HeadquartersModule(object):
             'confirm_dorm_summary': Region(1545, 905, 235, 65),
             'ignore_give_food_button': Region(690, 750, 185, 60),
             'tactical_class_building': Region(1050, 195, 115, 64),
+            'shop_building' : Region(1500, 195, 115, 64),
             'start_lesson_button': Region(1590, 900, 150, 60),
-            'cancel_lesson_button': Region(1285, 900, 170, 60)
+            'cancel_lesson_button': Region(1285, 900, 170, 60),
+            'go_home' : Region(1815, 30, 50,50)
         }
 
         if self.config.dorm['enabled']:
@@ -75,6 +77,15 @@ class HeadquartersModule(object):
                 Utils.touch_randomly(self.region["academy_tab"])
                 Utils.script_sleep(2)
                 # open tactical class
+
+
+                #상점 알람 무시
+                if Utils.find("headquarters/shop_alert"):
+                    Utils.touch_randomly(self.region["shop_building"])
+                    Utils.script_sleep(1)
+                    Utils.touch_randomly(self.region["go_home"])
+                    continue
+
                 Logger.log_debug("Opening tactical class.")
                 Utils.touch_randomly(self.region["tactical_class_building"])
                 self.skill_levelling()

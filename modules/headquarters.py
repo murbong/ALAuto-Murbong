@@ -18,14 +18,13 @@ class HeadquartersModule(object):
         self.config = config
         self.stats = stats
         self.region = {
-            'hq_tab': Region(734, 979, 218, 78),
-            'tap_out': Region(760, 865, 380, 105),
+            'hq_tab': Region(734, 985, 218, 65),
+            'tap_out': Region(760, 1000, 380, 50),
             'dorm_tab': Region(534, 558, 260, 295),
-            'academy_tab': Region(232, 578, 260, 295),
+            'academy_tab': Region(232, 558, 260, 295),
             'dorm_back_button': Region(21, 47, 65, 65),
             'dorm_eye_button': Region(37, 169, 50, 47),
             'supplies_bar': Region(345, 980, 215, 65),
-            'oxy_cola': Region(470, 580, 105, 90),
             'exit_snacks_menu': Region(900, 880, 380, 135),
             'button_back': Region(48, 43, 76, 76),
             'confirm_dorm_summary': Region(1545, 905, 235, 65),

@@ -694,6 +694,12 @@ class Utils(object):
         cls.touch([x, y])
 
     @classmethod
+    def button_back(cls):
+        """Sends an input command to press the back button via ADB
+        """
+        Adb.shell("input keyevent 4")
+        cls.script_sleep()
+    @classmethod
     def swipe(cls, x1, y1, x2, y2, ms):
         """Sends an input command to swipe the device screen between the
         specified coordinates via ADB

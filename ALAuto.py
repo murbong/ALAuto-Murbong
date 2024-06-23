@@ -216,7 +216,8 @@ try:
 
         # temporal solution to event alerts
         if not Utils.find("menu/button_battle"):
-            Utils.touch_randomly(Region(48, 43, 76, 34))
+            Utils.button_back()
+            #Utils.touch_randomly(Region(48, 43, 76, 34))
             Utils.script_sleep(1)
             continue
         if Utils.find("commission/alert_completed"):

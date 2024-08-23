@@ -80,12 +80,9 @@ class HeadquartersModule(object):
 
 
                 #상점 알람 무시
-                if Utils.find("headquarters/shop_alert",0.65):
-                    Logger.log_msg("Found shop alert.")
-                    Utils.touch_randomly(self.region["shop_building"])
-                    Utils.script_sleep(1)
-                    Utils.touch_randomly(self.region["go_home"])
-                    continue
+                Utils.touch_randomly(self.region["shop_building"])
+                Utils.script_sleep(1)
+                Utils.touch_randomly(self.region["dorm_back_button"])
 
                 Logger.log_debug("Opening tactical class.")
                 Utils.touch_randomly(self.region["tactical_class_building"])

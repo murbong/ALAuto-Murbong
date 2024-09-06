@@ -215,9 +215,12 @@ try:
         Utils.update_screen()
 
         # temporal solution to event alerts
+
+        #대함대 예외처리
+        if Utils.find_and_touch("menu/confirm"):
+            Utils.script_sleep(1)
         if not Utils.find("menu/button_battle"):
             Utils.button_back()
-            #Utils.touch_randomly(Region(48, 43, 76, 34))
             Utils.script_sleep(1)
             continue
         if Utils.find("commission/alert_completed"):

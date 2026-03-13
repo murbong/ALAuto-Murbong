@@ -444,7 +444,7 @@ class Utils(object):
         return
 
     @classmethod
-    def find(cls, image, similarity=DEFAULT_SIMILARITY, color=False, interrupt_if_not_found=False):
+    def find(cls, image, similarity=DEFAULT_SIMILARITY, color=False, interrupt_if_not_found=False, use_mask=False):
         """Finds the specified image on the screen
 
         Args:
@@ -464,11 +464,13 @@ class Utils(object):
                 template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), cv2.IMREAD_COLOR)
                 match = cv2.matchTemplate(cls.color_screen, template, cv2.TM_CCOEFF_NORMED)
             else:
+                mask = cls.get_mask_from_alpha(image) if use_mask else None
                 template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), 0)
                 if template is None:
                     Logger.log_error("Template image not found: assets/{}/{}.png".format(cls.assets, image))
                     return None
-                match = cv2.matchTemplate(cls.screen, template, cv2.TM_CCOEFF_NORMED)
+                comparison_method = cv2.TM_CCORR_NORMED if use_mask else cv2.TM_CCOEFF_NORMED
+                match = cv2.matchTemplate(cls.screen, template, comparison_method, mask=mask)
 
             height, width = template.shape[:2]
             value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]
@@ -487,11 +489,13 @@ class Utils(object):
                 template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), cv2.IMREAD_COLOR)
                 match = cv2.matchTemplate(cls.color_screen, template, cv2.TM_CCOEFF_NORMED)
             else:
+                mask = cls.get_mask_from_alpha(image) if use_mask else None
                 template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), 0)
                 if template is None:
                     Logger.log_error("Template image not found: assets/{}/{}.png".format(cls.assets, image))
                     return None
-                match = cv2.matchTemplate(cls.screen, template, cv2.TM_CCOEFF_NORMED)
+                comparison_method = cv2.TM_CCORR_NORMED if use_mask else cv2.TM_CCOEFF_NORMED
+                match = cv2.matchTemplate(cls.screen, template, comparison_method, mask=mask)
 
             height, width = template.shape[:2]
             value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]
@@ -514,10 +518,12 @@ class Utils(object):
             template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), cv2.IMREAD_COLOR)
             match = cv2.matchTemplate(cls.color_screen, template, cv2.TM_CCOEFF_NORMED)
         else:
+            mask = cls.get_mask_from_alpha(image) if use_mask else None
             template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), 0)
             if template is None:
                 return None # Already logged error
-            match = cv2.matchTemplate(cls.screen, template, cv2.TM_CCOEFF_NORMED)
+            comparison_method = cv2.TM_CCORR_NORMED if use_mask else cv2.TM_CCOEFF_NORMED
+            match = cv2.matchTemplate(cls.screen, template, comparison_method, mask=mask)
         
         height, width = template.shape[:2]
         value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]

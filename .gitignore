@@ -111,3 +111,6 @@ venv.bak/
 config-local.ini
 config.ini
 ascreencap_local
+traceback.log
+debug/*.png
+debug/*.log

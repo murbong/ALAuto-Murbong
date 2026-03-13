@@ -1,0 +1,648 @@
+{
+  "name": "commission_collect",
+  "description": "Collect completed commissions and start available ones.",
+  "regions": {
+    "left_menu": {
+      "x": 0,
+      "y": 306,
+      "w": 57,
+      "h": 86
+    },
+    "collect_oil": {
+      "x": 190,
+      "y": 110,
+      "w": 40,
+      "h": 40
+    },
+    "collect_gold": {
+      "x": 450,
+      "y": 110,
+      "w": 40,
+      "h": 40
+    },
+    "collect_book": {
+      "x": 700,
+      "y": 110,
+      "w": 40,
+      "h": 40
+    },
+    "complete_commission": {
+      "x": 615,
+      "y": 415,
+      "w": 170,
+      "h": 44
+    },
+    "button_go": {
+      "x": 615,
+      "y": 415,
+      "w": 170,
+      "h": 44
+    },
+    "urgent_tab": {
+      "x": 24,
+      "y": 327,
+      "w": 108,
+      "h": 103
+    },
+    "daily_tab": {
+      "x": 22,
+      "y": 185,
+      "w": 108,
+      "h": 103
+    },
+    "last_commission": {
+      "x": 298,
+      "y": 846,
+      "w": 1478,
+      "h": 146
+    },
+    "commission_recommend": {
+      "x": 1306,
+      "y": 490,
+      "w": 185,
+      "h": 85
+    },
+    "commission_start": {
+      "x": 1543,
+      "y": 490,
+      "w": 185,
+      "h": 85
+    },
+    "oil_warning": {
+      "x": 1073,
+      "y": 738,
+      "w": 221,
+      "h": 59
+    },
+    "button_back": {
+      "x": 48,
+      "y": 43,
+      "w": 76,
+      "h": 76
+    },
+    "tap_to_continue": {
+      "x": 661,
+      "y": 840,
+      "w": 598,
+      "h": 203
+    },
+    "dismiss_side_tab": {
+      "x": 1020,
+      "y": 148,
+      "w": 370,
+      "h": 784
+    },
+    "dismiss_message": {
+      "x": 688,
+      "y": 11,
+      "w": 538,
+      "h": 55
+    }
+  },
+  "routines": {
+    "completed_handler": [
+      {
+        "action": "tap_region",
+        "region": "complete_commission"
+      },
+      {
+        "action": "sleep",
+        "seconds": 1
+      },
+      {
+        "action": "while",
+        "condition": {
+          "type": "always",
+          "value": true
+        },
+        "steps": [
+          {
+            "action": "update_screen"
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "commission/alert_perfect"
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "tap_to_continue"
+              },
+              {
+                "action": "stats_increment",
+                "method": "increment_commissions_received"
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "menu/item_found"
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "tap_to_continue"
+              },
+              {
+                "action": "sleep",
+                "seconds": 1
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "commission/alert_available",
+              "similarity": 0.85
+            },
+            "steps": [
+              {
+                "action": "return",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "start_commission": [
+      {
+        "action": "set",
+        "value": false,
+        "var": "tapped_recommend"
+      },
+      {
+        "action": "while",
+        "condition": {
+          "type": "always",
+          "value": true
+        },
+        "steps": [
+          {
+            "action": "update_screen"
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "compare",
+              "source": "var",
+              "key": "commission_start_attempts",
+              "op": "gt",
+              "value": 10
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "dismiss_message"
+              },
+              {
+                "action": "return",
+                "value": false
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "commission/alert_begun"
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "dismiss_message"
+              },
+              {
+                "action": "stats_increment",
+                "method": "increment_commissions_started"
+              },
+              {
+                "action": "wait_update_screen",
+                "seconds": 1
+              },
+              {
+                "action": "if",
+                "condition": {
+                  "type": "image",
+                  "image": "commission/commissions_full"
+                },
+                "steps": [
+                  {
+                    "action": "return",
+                    "value": false
+                  }
+                ],
+                "else_steps": [
+                  {
+                    "action": "return",
+                    "value": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "menu/button_confirm"
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "oil_warning"
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "all",
+              "items": [
+                {
+                  "type": "compare",
+                  "source": "var",
+                  "key": "tapped_recommend",
+                  "op": "equals",
+                  "value": true
+                },
+                {
+                  "type": "image",
+                  "image": "commission/button_ready"
+                }
+              ]
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "commission_start"
+              },
+              {
+                "action": "set",
+                "value": false,
+                "var": "tapped_recommend"
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "commission/button_recommend"
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "commission_recommend"
+              },
+              {
+                "action": "set",
+                "value": true,
+                "var": "tapped_recommend"
+              },
+              {
+                "action": "increment",
+                "var": "commission_start_attempts",
+                "amount": 1
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "urgent_handler": [
+      {
+        "action": "tap_region",
+        "region": "urgent_tab"
+      },
+      {
+        "action": "while",
+        "condition": {
+          "type": "always",
+          "value": true
+        },
+        "steps": [
+          {
+            "action": "update_screen"
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "commission/commission_status"
+            },
+            "steps": [
+              {
+                "action": "tap_found_image",
+                "image": "commission/commission_status"
+              },
+              {
+                "action": "call",
+                "routine": "start_commission",
+                "into": "last_start_result"
+              },
+              {
+                "action": "if",
+                "condition": {
+                  "type": "compare",
+                  "source": "var",
+                  "key": "last_start_result",
+                  "op": "equals",
+                  "value": false
+                },
+                "steps": [
+                  {
+                    "action": "return",
+                    "value": false
+                  }
+                ]
+              },
+              {
+                "action": "continue"
+              }
+            ],
+            "else_steps": [
+              {
+                "action": "tap_region",
+                "region": "daily_tab"
+              },
+              {
+                "action": "sleep",
+                "seconds": 1
+              },
+              {
+                "action": "return",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "daily_handler": [
+      {
+        "action": "while",
+        "condition": {
+          "type": "always",
+          "value": true
+        },
+        "steps": [
+          {
+            "action": "update_screen"
+          },
+          {
+            "action": "swipe",
+            "from": {
+              "x": 960,
+              "y": 680
+            },
+            "to": {
+              "x": 960,
+              "y": 400
+            },
+            "duration_ms": 300
+          },
+          {
+            "action": "tap_region",
+            "region": "last_commission"
+          },
+          {
+            "action": "call",
+            "routine": "start_commission",
+            "into": "last_start_result"
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "compare",
+              "source": "var",
+              "key": "last_start_result",
+              "op": "equals",
+              "value": false
+            },
+            "steps": [
+              {
+                "action": "return",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "log",
+      "message": "Found commission completed alert."
+    },
+    {
+      "action": "tap_region",
+      "region": "left_menu"
+    },
+    {
+      "action": "sleep",
+      "seconds": 1
+    },
+    {
+      "action": "tap_region",
+      "region": "collect_oil"
+    },
+    {
+      "action": "tap_region",
+      "region": "collect_gold"
+    },
+    {
+      "action": "tap_region",
+      "region": "collect_book"
+    },
+    {
+      "action": "sleep",
+      "seconds": 5
+    },
+    {
+      "action": "set",
+      "value": 0,
+      "var": "attempts_count"
+    },
+    {
+      "action": "set",
+      "value": 0,
+      "var": "commission_start_attempts"
+    },
+    {
+      "action": "while",
+      "condition": {
+        "type": "always",
+        "value": true
+      },
+      "steps": [
+        {
+          "action": "update_screen"
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "commission/button_completed",
+            "y_between": [
+              332,
+              511
+            ]
+          },
+          "steps": [
+            {
+              "action": "call",
+              "routine": "completed_handler"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "commission/alert_available",
+            "similarity": 0.75,
+            "y_between": [
+              332,
+              511
+            ]
+          },
+          "steps": [
+            {
+              "action": "if",
+              "condition": {
+                "type": "compare",
+                "source": "var",
+                "key": "attempts_count",
+                "op": "gt",
+                "value": 2
+              },
+              "steps": [
+                {
+                  "action": "tap_region",
+                  "region": "dismiss_side_tab"
+                },
+                {
+                  "action": "return",
+                  "value": true
+                }
+              ]
+            },
+            {
+              "action": "tap_region",
+              "region": "button_go"
+            },
+            {
+              "action": "increment",
+              "var": "attempts_count",
+              "amount": 1
+            },
+            {
+              "action": "set",
+              "value": 0,
+              "var": "commission_start_attempts"
+            },
+            {
+              "action": "wait_update_screen",
+              "seconds": 1
+            },
+            {
+              "action": "while",
+              "condition": {
+                "type": "not",
+                "item": {
+                  "type": "image",
+                  "image": "menu/commission"
+                }
+              },
+              "steps": [
+                {
+                  "action": "tap_region",
+                  "region": "button_go"
+                },
+                {
+                  "action": "wait_update_screen",
+                  "seconds": 1
+                },
+                {
+                  "action": "tap_image",
+                  "image": "menu/alert_close"
+                }
+              ]
+            },
+            {
+              "action": "call",
+              "routine": "urgent_handler",
+              "into": "urgent_result"
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "compare",
+                "source": "var",
+                "key": "urgent_result",
+                "op": "equals",
+                "value": true
+              },
+              "steps": [
+                {
+                  "action": "call",
+                  "routine": "daily_handler"
+                }
+              ]
+            },
+            {
+              "action": "tap_region",
+              "region": "button_back"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "commission/button_go",
+            "y_between": [
+              332,
+              511
+            ]
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "dismiss_side_tab"
+            },
+            {
+              "action": "return",
+              "value": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

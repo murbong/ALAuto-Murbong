@@ -1,0 +1,95 @@
+{
+  "driver": {
+    "type": "adb"
+  },
+  "network": {
+    "service": "127.0.0.1:16384"
+  },
+  "screenshot": {
+    "mode": "SCREENCAP_PNG"
+  },
+  "assets": {
+    "server": "KR"
+  },
+  "updates": {
+    "enabled": true,
+    "channel": "Development"
+  },
+  "combat": {
+    "enabled": false,
+    "map": "3-4",
+    "kills_before_boss": 0,
+    "boss_fleet": false,
+    "oil_limit": 1000,
+    "retire_cycle": 2,
+    "retreat_after": 0,
+    "ignore_mystery_nodes": false,
+    "focus_on_mystery_nodes": false,
+    "clearing_mode": false,
+    "hide_subs_hunting_range": false,
+    "small_boss_icon": false,
+    "siren_elites": false,
+    "ignore_morale": false,
+    "low_mood_sleep_time": 1.0,
+    "search_mode": 1
+  },
+  "commissions": {
+    "enabled": true
+  },
+  "missions": {
+    "enabled": false
+  },
+  "enhancement": {
+    "enabled": false,
+    "single_enhancement": false
+  },
+  "retirement": {
+    "enabled": false,
+    "rares": false,
+    "commons": true
+  },
+  "dorm": {
+    "enabled": true,
+    "AvailableSupplies": [
+      20000,
+      10000,
+      5000,
+      3000,
+      2000,
+      1000
+    ]
+  },
+  "academy": {
+    "enabled": true,
+    "skill_book_tier": 2
+  },
+  "research": {
+    "enabled": false,
+    "AllowFreeProjects": true,
+    "AllowConsumingCoins": true,
+    "AllowConsumingCubes": false,
+    "WithoutRequirements": true,
+    "AwardMustContainPRBlueprint": false,
+    "30Minutes": true,
+    "1Hour": true,
+    "1Hour30Minutes": true,
+    "2Hours": true,
+    "2Hours30Minutes": true,
+    "4Hours": false,
+    "5Hours": false,
+    "6Hours": false,
+    "8Hours": false,
+    "12Hours": false
+  },
+  "events": {
+    "enabled": false,
+    "name": "Royal_Maids",
+    "levels": [
+      "EX",
+      "H",
+      "N",
+      "E"
+    ],
+    "ignore_rateup": false
+  }
+}

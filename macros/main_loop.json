@@ -1,0 +1,279 @@
+{
+  "name": "main_loop",
+  "description": "Top-level polling loop. The runtime should only execute this file.",
+  "runtime": {
+    "driver": {
+      "type": "adb"
+    },
+    "network": {
+      "service": "127.0.0.1:16384"
+    },
+    "screenshot": {
+      "mode": "ASCREENCAP"
+    },
+    "assets": {
+      "server": "KR"
+    },
+    "updates": {
+      "enabled": true,
+      "channel": "Development"
+    },
+    "commissions": {
+      "enabled": true
+    },
+    "dorm": {
+      "enabled": true,
+      "AvailableSupplies": [
+        20000,
+        10000,
+        5000,
+        3000,
+        2000,
+        1000
+      ]
+    },
+    "academy": {
+      "enabled": true,
+      "skill_book_tier": 2
+    },
+    "combat": {
+      "enabled": false,
+      "map": "3-4",
+      "kills_before_boss": 0,
+      "boss_fleet": false,
+      "oil_limit": 1000,
+      "retire_cycle": 2,
+      "retreat_after": 0,
+      "ignore_mystery_nodes": false,
+      "focus_on_mystery_nodes": false,
+      "clearing_mode": false,
+      "hide_subs_hunting_range": false,
+      "small_boss_icon": false,
+      "siren_elites": false,
+      "ignore_morale": false,
+      "low_mood_sleep_time": 1.0,
+      "search_mode": 1
+    },
+    "missions": {
+      "enabled": false
+    },
+    "research": {
+      "enabled": false,
+      "AllowFreeProjects": true,
+      "AllowConsumingCoins": true,
+      "AllowConsumingCubes": false,
+      "WithoutRequirements": true,
+      "AwardMustContainPRBlueprint": false,
+      "30Minutes": true,
+      "1Hour": true,
+      "1Hour30Minutes": true,
+      "2Hours": true,
+      "2Hours30Minutes": true,
+      "4Hours": false,
+      "5Hours": false,
+      "6Hours": false,
+      "8Hours": false,
+      "12Hours": false
+    },
+    "headquarters": {
+      "enabled": true
+    }
+  },
+  "steps": [
+    {
+      "action": "if",
+      "condition": {
+        "type": "compare",
+        "source": "runtime",
+        "key": "combat.enabled",
+        "op": "equals",
+        "value": true
+      },
+      "steps": [
+        {
+          "action": "run_macro",
+          "path": "combat_auto_base.json"
+        }
+      ],
+      "else_steps": [
+        {
+          "action": "while",
+          "condition": {
+            "type": "always",
+            "value": true
+          },
+          "steps": [
+            {
+              "action": "update_screen"
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "image",
+                "image": "menu/confirm"
+              },
+              "steps": [
+                {
+                  "action": "tap_image",
+                  "image": "menu/confirm"
+                },
+                {
+                  "action": "sleep",
+                  "seconds": 1
+                },
+                {
+                  "action": "continue"
+                }
+              ]
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "not",
+                "item": {
+                  "type": "image",
+                  "image": "menu/button_battle"
+                }
+              },
+              "steps": [
+                {
+                  "action": "back"
+                },
+                {
+                  "action": "sleep",
+                  "seconds": 1
+                },
+                {
+                  "action": "continue"
+                }
+              ]
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "all",
+                "items": [
+                  {
+                    "type": "compare",
+                    "source": "runtime",
+                    "key": "commissions.enabled",
+                    "op": "equals",
+                    "value": true
+                  },
+                  {
+                    "type": "image",
+                    "image": "commission/alert_completed"
+                  }
+                ]
+              },
+              "steps": [
+                {
+                  "action": "run_macro",
+                  "path": "commission_collect.json"
+                },
+                {
+                  "action": "print_stats",
+                  "oil_limit": {
+                    "ref": "runtime",
+                    "key": "combat.oil_limit"
+                  }
+                },
+                {
+                  "action": "continue"
+                }
+              ]
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "all",
+                "items": [
+                  {
+                    "type": "compare",
+                    "source": "runtime",
+                    "key": "headquarters.enabled",
+                    "op": "equals",
+                    "value": true
+                  },
+                  {
+                    "type": "image",
+                    "image": "headquarters/hq_alert"
+                  }
+                ]
+              },
+              "steps": [
+                {
+                  "action": "run_macro",
+                  "path": "headquarters.json"
+                },
+                {
+                  "action": "continue"
+                }
+              ]
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "all",
+                "items": [
+                  {
+                    "type": "compare",
+                    "source": "runtime",
+                    "key": "research.enabled",
+                    "op": "equals",
+                    "value": true
+                  },
+                  {
+                    "type": "image",
+                    "image": "research/lab_alert"
+                  }
+                ]
+              },
+              "steps": [
+                {
+                  "action": "run_macro",
+                  "path": "research.json"
+                },
+                {
+                  "action": "continue"
+                }
+              ]
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "all",
+                "items": [
+                  {
+                    "type": "compare",
+                    "source": "runtime",
+                    "key": "missions.enabled",
+                    "op": "equals",
+                    "value": true
+                  },
+                  {
+                    "type": "image",
+                    "image": "mission/alert_completed"
+                  }
+                ]
+              },
+              "steps": [
+                {
+                  "action": "run_macro",
+                  "path": "mission_claim.json"
+                },
+                {
+                  "action": "continue"
+                }
+              ]
+            },
+            {
+              "action": "sleep",
+              "seconds": 15
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

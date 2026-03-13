@@ -1,0 +1,232 @@
+{
+  "name": "combat_auto_base",
+  "description": "Base combat macro for modern auto-battle flow. Assumes the target stage is already selected or the combat UI is already open.",
+  "steps": [
+    {
+      "action": "log",
+      "message": "Starting base combat automation."
+    },
+    {
+      "action": "while",
+      "steps": [
+        {
+          "action": "wait_for",
+          "condition": {
+            "type": "any",
+            "items": [
+              {
+                "type": "image",
+                "image": "combat/retirement"
+              },
+              {
+                "type": "image",
+                "image": "combat/repeat"
+              }
+            ]
+          },
+          "timeout_steps": [
+            {
+              "action": "log",
+              "message": "Timed out waiting for combat/retirement or combat/repeat."
+            }
+          ],
+          "timeout": 300,
+          "poll_seconds": 30
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "combat/retirement"
+          },
+          "steps": [
+            {
+              "action": "call",
+              "routine": "retirement"
+            },
+            {
+              "action": "continue"
+            }
+          ],
+          "else_steps": [
+            {
+              "action": "if",
+              "condition": {
+                "type": "image",
+                "image": "combat/alert_morale_low",
+                "use_mask": true,
+                "similarity": 0.9
+              },
+              "steps": [
+                {
+                  "action": "set",
+                  "value": {
+                    "ref": "stats",
+                    "key": "combat_done"
+                  },
+                  "var": "combat_done_count"
+                },
+                {
+                  "action": "log",
+                  "message": "Morale warning detected. Combat completed so far: {{combat_done_count}}. Stopping combat automation."
+                },
+                {
+                  "action": "return",
+                  "value": false
+                }
+              ]
+            },
+            {
+              "action": "tap_image",
+              "image": "combat/repeat"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            }
+          ]
+        }
+      ],
+      "condition": {
+        "type": "always",
+        "image": "menu/confirm",
+        "value": true
+      }
+    },
+    {
+      "action": "sleep",
+      "seconds": 5
+    }
+  ],
+  "routines": {
+    "retirement": [
+      {
+        "action": "tap_region",
+        "region": "retirement"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "retireall"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "confirm"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "update_screen"
+      },
+      {
+        "action": "tap_image",
+        "image": "combat/confirm"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "touch"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "disassembly"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "disassembly_ok"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "touch"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_region",
+        "region": "back"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      },
+      {
+        "action": "tap_image",
+        "image": "combat/auto_off"
+      },
+      {
+        "action": "sleep",
+        "seconds": 3
+      }
+    ]
+  },
+  "regions": {
+    "retirement": {
+      "x": 585,
+      "y": 732,
+      "w": 147,
+      "h": 64
+    },
+    "retireall": {
+      "x": 980,
+      "y": 970,
+      "w": 203,
+      "h": 60
+    },
+    "confirm": {
+      "x": 1451,
+      "y": 935,
+      "w": 135,
+      "h": 63
+    },
+    "touch": {
+      "x": 345,
+      "y": 164,
+      "w": 1227,
+      "h": 711
+    },
+    "disassembly": {
+      "x": 1487,
+      "y": 861,
+      "w": 158,
+      "h": 76
+    },
+    "disassembly_ok": {
+      "x": 1139,
+      "y": 816,
+      "w": 133,
+      "h": 69
+    },
+    "back": {
+      "x": 55,
+      "y": 47,
+      "w": 56,
+      "h": 68
+    }
+  }
+}

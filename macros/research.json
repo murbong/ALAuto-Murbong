@@ -1,0 +1,694 @@
+{
+  "name": "research",
+  "regions": {
+    "lab_tab": {
+      "x": 1004,
+      "y": 1013,
+      "w": 162,
+      "h": 39
+    },
+    "research_academy": {
+      "x": 825,
+      "y": 415,
+      "w": 260,
+      "h": 265
+    },
+    "project_click": {
+      "x": 865,
+      "y": 155,
+      "w": 180,
+      "h": 100
+    },
+    "right_arrow": {
+      "x": 1855,
+      "y": 525,
+      "w": 30,
+      "h": 30
+    },
+    "commence_tab": {
+      "x": 650,
+      "y": 855,
+      "w": 215,
+      "h": 35
+    },
+    "main_menu_button": {
+      "x": 1821,
+      "y": 28,
+      "w": 44,
+      "h": 42
+    },
+    "confirm_tab": {
+      "x": 1095,
+      "y": 760,
+      "w": 190,
+      "h": 50
+    }
+  },
+  "routines": {
+    "collect_completed": [
+      {
+        "action": "tap_region",
+        "region": "project_click"
+      },
+      {
+        "action": "wait_update_screen",
+        "seconds": 1
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "image",
+          "image": "research/item_found"
+        },
+        "steps": [
+          {
+            "action": "tap_region",
+            "region": "project_click"
+          },
+          {
+            "action": "sleep",
+            "seconds": 1
+          },
+          {
+            "action": "tap_region",
+            "region": "project_click"
+          },
+          {
+            "action": "return",
+            "value": true
+          }
+        ]
+      },
+      {
+        "action": "repeat",
+        "times": 5,
+        "steps": [
+          {
+            "action": "tap_region",
+            "region": "right_arrow"
+          },
+          {
+            "action": "wait_update_screen",
+            "seconds": 1
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "research/item_found"
+            },
+            "steps": [
+              {
+                "action": "tap_region",
+                "region": "project_click"
+              },
+              {
+                "action": "sleep",
+                "seconds": 1
+              },
+              {
+                "action": "tap_region",
+                "region": "project_click"
+              },
+              {
+                "action": "return",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "action": "return",
+        "value": false
+      }
+    ],
+    "project_matches": [
+      {
+        "action": "wait_update_screen",
+        "seconds": 1
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.8Hours",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/8h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.6Hours",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/6h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.5Hours",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/5h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.4Hours",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/4h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.2Hours30Minutes",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/2_30h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.2Hours",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/2h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.1Hour30Minutes",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/1_30h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.1Hour",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/1h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.30Minutes",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/30m",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.WithoutRequirements",
+              "op": "equals",
+              "value": true
+            },
+            {
+              "type": "not",
+              "item": {
+                "type": "image",
+                "image": "research/nothing",
+                "similarity": 0.99
+              }
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.AllowConsumingCoins",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/coins",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.AllowConsumingCubes",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/cubes",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.AwardMustContainPRBlueprint",
+              "op": "equals",
+              "value": true
+            },
+            {
+              "type": "not",
+              "item": {
+                "type": "image",
+                "image": "research/PRBlueprint"
+              }
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.AllowFreeProjects",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/free",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "all",
+          "items": [
+            {
+              "type": "compare",
+              "source": "runtime",
+              "key": "research.12Hours",
+              "op": "equals",
+              "value": false
+            },
+            {
+              "type": "image",
+              "image": "research/12h",
+              "similarity": 0.99
+            }
+          ]
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": false
+          }
+        ]
+      },
+      {
+        "action": "return",
+        "value": true
+      }
+    ],
+    "start_project": [
+      {
+        "action": "tap_region",
+        "region": "commence_tab"
+      },
+      {
+        "action": "wait_update_screen",
+        "seconds": 1
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "image",
+          "image": "research/terminate",
+          "similarity": 0.99
+        },
+        "steps": [
+          {
+            "action": "return",
+            "value": true
+          }
+        ]
+      },
+      {
+        "action": "if",
+        "condition": {
+          "type": "image",
+          "image": "research/confirm",
+          "similarity": 0.99
+        },
+        "steps": [
+          {
+            "action": "tap_region",
+            "region": "confirm_tab"
+          },
+          {
+            "action": "wait_update_screen",
+            "seconds": 1
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "research/terminate",
+              "similarity": 0.99
+            },
+            "steps": [
+              {
+                "action": "return",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "action": "return",
+        "value": false
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "tap_region",
+      "region": "lab_tab"
+    },
+    {
+      "action": "wait_update_screen",
+      "seconds": 1
+    },
+    {
+      "action": "if",
+      "condition": {
+        "type": "image",
+        "image": "research/research_academy_alert",
+        "similarity": 0.99
+      },
+      "steps": [
+        {
+          "action": "tap_region",
+          "region": "research_academy"
+        },
+        {
+          "action": "sleep",
+          "seconds": 1
+        },
+        {
+          "action": "call",
+          "routine": "collect_completed",
+          "into": "completed_found"
+        },
+        {
+          "action": "set",
+          "value": false,
+          "var": "started"
+        },
+        {
+          "action": "repeat",
+          "times": 5,
+          "steps": [
+            {
+              "action": "call",
+              "routine": "project_matches",
+              "into": "project_ok"
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "compare",
+                "source": "var",
+                "key": "project_ok",
+                "op": "equals",
+                "value": true
+              },
+              "steps": [
+                {
+                  "action": "call",
+                  "routine": "start_project",
+                  "into": "project_started"
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "compare",
+                    "source": "var",
+                    "key": "project_started",
+                    "op": "equals",
+                    "value": true
+                  },
+                  "steps": [
+                    {
+                      "action": "set",
+                      "value": true,
+                      "var": "started"
+                    },
+                    {
+                      "action": "break"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "tap_region",
+              "region": "right_arrow"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "action": "tap_region",
+      "region": "main_menu_button"
+    },
+    {
+      "action": "wait_update_screen",
+      "seconds": 1
+    },
+    {
+      "action": "return",
+      "value": true
+    }
+  ]
+}

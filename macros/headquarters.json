@@ -1,0 +1,497 @@
+{
+  "name": "headquarters",
+  "regions": {
+    "hq_tab": {
+      "x": 734,
+      "y": 985,
+      "w": 218,
+      "h": 65
+    },
+    "tap_out": {
+      "x": 760,
+      "y": 1000,
+      "w": 380,
+      "h": 50
+    },
+    "dorm_tab": {
+      "x": 534,
+      "y": 558,
+      "w": 260,
+      "h": 295
+    },
+    "academy_tab": {
+      "x": 232,
+      "y": 558,
+      "w": 260,
+      "h": 295
+    },
+    "dorm_back_button": {
+      "x": 49,
+      "y": 39,
+      "w": 56,
+      "h": 55
+    },
+    "supplies_bar": {
+      "x": 345,
+      "y": 980,
+      "w": 215,
+      "h": 65
+    },
+    "exit_snacks_menu": {
+      "x": 900,
+      "y": 880,
+      "w": 380,
+      "h": 135
+    },
+    "button_back": {
+      "x": 48,
+      "y": 43,
+      "w": 76,
+      "h": 76
+    },
+    "confirm_dorm_summary": {
+      "x": 1545,
+      "y": 905,
+      "w": 235,
+      "h": 65
+    },
+    "ignore_give_food_button": {
+      "x": 690,
+      "y": 750,
+      "w": 185,
+      "h": 60
+    },
+    "tactical_class_building": {
+      "x": 1050,
+      "y": 195,
+      "w": 115,
+      "h": 64
+    },
+    "shop_building": {
+      "x": 1500,
+      "y": 195,
+      "w": 115,
+      "h": 64
+    },
+    "start_lesson_button": {
+      "x": 1590,
+      "y": 900,
+      "w": 150,
+      "h": 60
+    },
+    "snack_1": {
+      "x": 620,
+      "y": 600,
+      "w": 100,
+      "h": 100
+    },
+    "snack_2": {
+      "x": 815,
+      "y": 600,
+      "w": 100,
+      "h": 100
+    },
+    "snack_3": {
+      "x": 1010,
+      "y": 600,
+      "w": 100,
+      "h": 100
+    },
+    "snack_4": {
+      "x": 1205,
+      "y": 600,
+      "w": 100,
+      "h": 100
+    },
+    "snack_5": {
+      "x": 1400,
+      "y": 600,
+      "w": 100,
+      "h": 100
+    },
+    "snack_6": {
+      "x": 1595,
+      "y": 600,
+      "w": 100,
+      "h": 100
+    }
+  },
+  "routines": {
+    "collect_all": [
+      {
+        "action": "sleep",
+        "seconds": 1
+      },
+      {
+        "action": "wait_update_screen",
+        "seconds": 1
+      },
+      {
+        "action": "tap_image",
+        "image": "headquarters/dorm_receive",
+        "similarity": 0.9
+      },
+      {
+        "action": "return",
+        "value": true
+      }
+    ],
+    "feed_snacks": [
+      {
+        "action": "plugin",
+        "plugin": "headquarters.feed_snacks",
+        "initial_sleep": 0,
+        "menu_sleep": 1,
+        "retry_wait": 0.5,
+        "max_retries": 40,
+        "total_capacity": 44000,
+        "start_feed_threshold": 0.5,
+        "stop_feed_threshold": 0.9
+      },
+      {
+        "action": "return",
+        "value": true
+      }
+    ],
+    "refill_dorm": [
+      {
+        "action": "plugin",
+        "plugin": "headquarters.refill_dorm",
+        "initial_sleep": 5,
+        "menu_sleep": 1,
+        "retry_wait": 0.5,
+        "max_retries": 40,
+        "total_capacity": 44000,
+        "start_feed_threshold": 0.5,
+        "stop_feed_threshold": 0.9
+      },
+      {
+        "action": "return",
+        "value": true
+      }
+    ],
+    "academy_flow": [
+      {
+        "action": "tap_region",
+        "region": "academy_tab"
+      },
+      {
+        "action": "sleep",
+        "seconds": 2
+      },
+      {
+        "action": "tap_region",
+        "region": "shop_building"
+      },
+      {
+        "action": "sleep",
+        "seconds": 1
+      },
+      {
+        "action": "tap_region",
+        "region": "dorm_back_button"
+      },
+      {
+        "action": "tap_region",
+        "region": "tactical_class_building"
+      },
+      {
+        "action": "sleep",
+        "seconds": 5
+      },
+      {
+        "action": "repeat",
+        "times": 5,
+        "steps": [
+          {
+            "action": "wait_update_screen",
+            "seconds": 1
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "menu/button_confirm"
+            },
+            "steps": [
+              {
+                "action": "tap_image",
+                "image": "menu/button_confirm"
+              },
+              {
+                "action": "sleep",
+                "seconds": 3.5
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "headquarters/skill_exp_gain"
+            },
+            "steps": [
+              {
+                "action": "tap_image",
+                "image": "headquarters/t2_offense_skillbook",
+                "similarity": 0.9,
+                "color": true
+              },
+              {
+                "action": "tap_image",
+                "image": "headquarters/t2_defense_skillbook",
+                "similarity": 0.9,
+                "color": true
+              },
+              {
+                "action": "tap_image",
+                "image": "headquarters/t2_support_skillbook",
+                "similarity": 0.9,
+                "color": true
+              },
+              {
+                "action": "sleep",
+                "seconds": 1
+              },
+              {
+                "action": "tap_region",
+                "region": "start_lesson_button"
+              },
+              {
+                "action": "continue"
+              }
+            ]
+          },
+          {
+            "action": "if",
+            "condition": {
+              "type": "image",
+              "image": "headquarters/tactical_class"
+            },
+            "steps": [
+              {
+                "action": "back"
+              },
+              {
+                "action": "sleep",
+                "seconds": 1
+              },
+              {
+                "action": "break"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "action": "back"
+      },
+      {
+        "action": "return",
+        "value": true
+      }
+    ],
+    "dorm_flow": [
+      {
+        "action": "tap_region",
+        "region": "dorm_tab"
+      },
+      {
+        "action": "call",
+        "routine": "refill_dorm"
+      },
+      {
+        "action": "call",
+        "routine": "collect_all"
+      },
+      {
+        "action": "sleep",
+        "seconds": 1
+      },
+      {
+        "action": "tap_region",
+        "region": "dorm_back_button"
+      },
+      {
+        "action": "return",
+        "value": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "action": "tap_region",
+      "region": "hq_tab"
+    },
+    {
+      "action": "set",
+      "value": 0,
+      "var": "counterHQ"
+    },
+    {
+      "action": "set",
+      "value": 0,
+      "var": "counterAcademy"
+    },
+    {
+      "action": "set",
+      "value": 0,
+      "var": "counterDorm"
+    },
+    {
+      "action": "while",
+      "condition": {
+        "type": "always",
+        "value": true
+      },
+      "steps": [
+        {
+          "action": "wait_update_screen",
+          "seconds": 1
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "all",
+            "items": [
+              {
+                "type": "compare",
+                "source": "runtime",
+                "key": "academy.enabled",
+                "op": "equals",
+                "value": true
+              },
+              {
+                "type": "compare",
+                "source": "var",
+                "key": "counterAcademy",
+                "op": "lt",
+                "value": 2
+              },
+              {
+                "type": "image",
+                "image": "headquarters/academy_alert",
+                "similarity": 0.99
+              }
+            ]
+          },
+          "steps": [
+            {
+              "action": "call",
+              "routine": "academy_flow"
+            },
+            {
+              "action": "increment",
+              "amount": 1,
+              "var": "counterAcademy"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "all",
+            "items": [
+              {
+                "type": "compare",
+                "source": "runtime",
+                "key": "dorm.enabled",
+                "op": "equals",
+                "value": true
+              },
+              {
+                "type": "compare",
+                "source": "var",
+                "key": "counterDorm",
+                "op": "lt",
+                "value": 3
+              },
+              {
+                "type": "image",
+                "image": "headquarters/dorm_alert",
+                "similarity": 0.99
+              }
+            ]
+          },
+          "steps": [
+            {
+              "action": "call",
+              "routine": "dorm_flow"
+            },
+            {
+              "action": "increment",
+              "amount": 1,
+              "var": "counterDorm"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "all",
+            "items": [
+              {
+                "type": "compare",
+                "source": "var",
+                "key": "counterHQ",
+                "op": "lt",
+                "value": 5
+              },
+              {
+                "type": "image",
+                "image": "headquarters/hq_alert"
+              }
+            ]
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "hq_tab"
+            },
+            {
+              "action": "increment",
+              "amount": 1,
+              "var": "counterHQ"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "headquarters/dorm_sign"
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "tap_out"
+            }
+          ]
+        },
+        {
+          "action": "break"
+        }
+      ]
+    },
+    {
+      "action": "wait_update_screen",
+      "seconds": 1
+    },
+    {
+      "action": "return",
+      "value": true
+    }
+  ]
+}

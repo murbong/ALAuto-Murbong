@@ -261,7 +261,7 @@ class HeadquartersModule(object):
     def skill_levelling(self):
         """
         This method ensures that the skills currently being levelled continue to do so.
-        The skillbooks used are the ones indicated by the SkillBookTier setting in the config.ini file.
+        The skillbooks used are the ones indicated by the skill_book_tier setting in config.json.
         """
         Utils.script_sleep(5)
         Logger.log_msg("Levelling the skills of the previously chosen ships.")

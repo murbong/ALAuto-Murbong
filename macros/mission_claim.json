@@ -1,0 +1,175 @@
+{
+  "name": "mission_claim",
+  "description": "Collect completed missions and close reward screens.",
+  "regions": {
+    "mission_menu": {
+      "x": 1206,
+      "y": 1001,
+      "w": 220,
+      "h": 64
+    },
+    "collect": {
+      "x": 1551,
+      "y": 0,
+      "w": 111,
+      "h": 58
+    },
+    "first_claim": {
+      "x": 1646,
+      "y": 174,
+      "w": 117,
+      "h": 102
+    },
+    "tap_to_continue": {
+      "x": 661,
+      "y": 840,
+      "w": 598,
+      "h": 203
+    },
+    "dismiss_ship_drop": {
+      "x": 1228,
+      "y": 103,
+      "w": 692,
+      "h": 735
+    }
+  },
+  "steps": [
+    {
+      "action": "while",
+      "condition": {
+        "type": "always",
+        "value": true
+      },
+      "steps": [
+        {
+          "action": "update_screen"
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "mission/alert_completed"
+          },
+          "steps": [
+            {
+              "action": "log",
+              "message": "Found mission completed alert."
+            },
+            {
+              "action": "tap_region",
+              "region": "mission_menu"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "any",
+            "items": [
+              {
+                "type": "image",
+                "image": "menu/drop_ssr"
+              },
+              {
+                "type": "image",
+                "image": "menu/drop_elite"
+              }
+            ]
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "dismiss_ship_drop"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "not",
+            "item": {
+              "type": "image",
+              "image": "menu/missions"
+            }
+          },
+          "steps": [
+            {
+              "action": "return",
+              "value": true
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "mission/button_collect"
+          },
+          "steps": [
+            {
+              "action": "log",
+              "message": "Collected all missions."
+            },
+            {
+              "action": "tap_region",
+              "region": "collect"
+            },
+            {
+              "action": "sleep",
+              "seconds": 3
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "mission/button_claim"
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "first_claim"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "menu/item_found"
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "tap_to_continue"
+            },
+            {
+              "action": "continue"
+            }
+          ]
+        },
+        {
+          "action": "log",
+          "message": "No more missions to claim/collect."
+        },
+        {
+          "action": "return",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

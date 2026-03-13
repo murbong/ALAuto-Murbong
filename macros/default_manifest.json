@@ -1,0 +1,21 @@
+{
+  "name": "default_watchers",
+  "idle_seconds": 3,
+  "routines": [
+    {
+      "name": "commission_alert",
+      "when": {
+        "image": "commission/alert_completed"
+      },
+      "macro": "macros/commission_collect.json",
+      "print_stats": true
+    },
+    {
+      "name": "mission_alert",
+      "when": {
+        "image": "mission/alert_completed"
+      },
+      "macro": "macros/mission_claim.json"
+    }
+  ]
+}

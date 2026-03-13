@@ -66,7 +66,6 @@ class Config(object):
             return val
 
     def read(self):
-
         backup_config = deepcopy(self.__dict__)
         config = configparser.ConfigParser()
         config.read(self.config_file)
@@ -89,17 +88,8 @@ class Config(object):
 
         if config.getboolean('Enhancement', 'Enabled'):
             self._read_enhancement(config)
-        
-        if 'Retirement' in config:
-            # New retirement settings
-            self.retirement['enabled'] = config.getboolean('Retirement', 'enabled', fallback=False)
-            self.retirement['rares'] = config.getboolean('Retirement', 'Rares', fallback=True)
-            self.retirement['commons'] = config.getboolean('Retirement', 'Commons', fallback=True)
-        elif 'Retirement' in config['Modules']:
-            # Legacy retirement setting. Maintain classic rare retirement behavior
-            self.retirement['enabled'] = config.getboolean('Modules', 'Retirement')
-            self.retirement['rares'] = True
-            self.retirement['commons'] = True
+
+        self._read_retirement(config)
 
         if config.getboolean('Research', 'Enabled'):
             self._read_research(config)
@@ -124,6 +114,20 @@ class Config(object):
             if backup_config != self.__dict__:
                 Logger.log_warning("Config change detected. Hot-reloading.")
                 self.changed = True
+
+    def _read_retirement(self, config):
+        """Parse retirement settings, including legacy module-based config."""
+        if 'Retirement' in config:
+            self.retirement['enabled'] = config.getboolean('Retirement', 'enabled', fallback=False)
+            self.retirement['rares'] = config.getboolean('Retirement', 'Rares', fallback=True)
+            self.retirement['commons'] = config.getboolean('Retirement', 'Commons', fallback=True)
+            return
+
+        if config.has_option('Modules', 'Retirement'):
+            # Legacy retirement setting. Maintain classic rare retirement behavior.
+            self.retirement['enabled'] = config.getboolean('Modules', 'Retirement')
+            self.retirement['rares'] = True
+            self.retirement['commons'] = True
 
     def _read_screenshot(self, config):
         """Method to parse the Updates settings of the passed in config.
@@ -322,7 +326,7 @@ class Config(object):
             config (dict): previously backed up config
         """
         for key in config:
-            setattr(self, key, config['key'])
+            setattr(self, key, config[key])
 
     def _validate_list(self, val, min_len=None, max_len=None, valid_vals=None, map_vals=None, cast=None, unique=False):
         s_list = re.split(r'\s*,\s*|\s+', val)
@@ -331,15 +335,15 @@ class Config(object):
             raise ValueError()
         if max_len is not None and len(s_list) > max_len:
             raise ValueError()
-        if s_list is not None:
+        if s_list is not None and cast is not None:
             for i in range(len(s_list)):
                 s_list[i] = cast(s_list[i])
         if valid_vals is not None:
-            for v in s_list:
+            for i, v in enumerate(s_list):
                 if v not in valid_vals:
                     raise ValueError()
                 if map_vals is not None:
-                    s_list[i] = map_vals[valid_vals.index(s_list[i])]
+                    s_list[i] = map_vals[valid_vals.index(v)]
         if unique and len(set(s_list)) != len(s_list):
             raise ValueError()
 

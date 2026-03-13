@@ -48,6 +48,7 @@ class CommissionModule(object):
         Utils.touch_randomly(self.region["collect_oil"])
         Utils.touch_randomly(self.region["collect_gold"])
         Utils.touch_randomly(self.region["collect_book"])
+        Utils.script_sleep(5)
 
         self.attempts_count = 0
 
@@ -104,7 +105,7 @@ class CommissionModule(object):
         while True:
             Utils.update_screen()
 
-            if Utils.find("commission/alert_perfect"):
+            if Utils.find("commission/alert_perfect", interrupt_if_not_found=False):
                 Utils.touch_randomly(self.region["tap_to_continue"])
                 self.stats.increment_commissions_received()
                 continue

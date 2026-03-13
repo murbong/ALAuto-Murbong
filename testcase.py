@@ -2,15 +2,10 @@ import cv2
 
 from modules.commission import CommissionModule
 from modules.headquarters import HeadquartersModule
+from modules.research import ResearchModule
 from util.config import Config
 
-img = cv2.imread("./Screenshot_2024.06.22_16.57.28.732.png",cv2.IMREAD_COLOR)
-
-# template = cv2.imread('assets/KR/commission/button_go.png', cv2.IMREAD_COLOR)
-# a,w,h = template.shape[::-1]
-# match = cv2.matchTemplate(img, template, cv2.TM_CCOEFF_NORMED)
-# min_val, max_val, min_loc,max_loc = cv2.minMaxLoc(match)
-# bottom_right = (max_loc[0] + w, max_loc[1] + h)
+img = cv2.imread("./Screenshot_2024.09.12_02.48.00.533.png",cv2.IMREAD_COLOR)
 
 config = Config('config.ini')
 
@@ -18,8 +13,10 @@ commisionTest = CommissionModule(config,None)
 
 headquaterTest = HeadquartersModule (config,None)
 
-for region in headquaterTest.region:
-    value = headquaterTest.region[region]
+researchTest = ResearchModule(config,None)
+
+for region in researchTest.region:
+    value = researchTest.region[region]
 
     x = value.x
     y = value.y

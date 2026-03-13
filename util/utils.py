@@ -444,7 +444,7 @@ class Utils(object):
         return
 
     @classmethod
-    def find(cls, image, similarity=DEFAULT_SIMILARITY, color=False):
+    def find(cls, image, similarity=DEFAULT_SIMILARITY, color=False, interrupt_if_not_found=False):
         """Finds the specified image on the screen
 
         Args:
@@ -452,22 +452,80 @@ class Utils(object):
             similarity (float, optional): Defaults to DEFAULT_SIMILARITY.
                 Percentage in similarity that the image should at least match.
             color (boolean): find the image in color screen
+            interrupt_if_not_found (boolean): Defaults to False. If True, will press back
+                and click center of screen if image is not found after retries.
 
         Returns:
             Region: region object containing the location and size of the image
         """
+        if not interrupt_if_not_found:
+            # simple check, no retries, no interrupt
+            if color:
+                template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), cv2.IMREAD_COLOR)
+                match = cv2.matchTemplate(cls.color_screen, template, cv2.TM_CCOEFF_NORMED)
+            else:
+                template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), 0)
+                if template is None:
+                    Logger.log_error("Template image not found: assets/{}/{}.png".format(cls.assets, image))
+                    return None
+                match = cv2.matchTemplate(cls.screen, template, cv2.TM_CCOEFF_NORMED)
+
+            height, width = template.shape[:2]
+            value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]
+
+            if value >= similarity:
+                Logger.log_debug("find {}".format(image))
+                return Region(location[0], location[1], width, height)
+            else:
+                Logger.log_debug("can't find {}".format(image))
+                return None
+
+        # logic with retries and interrupt
+        retries = 3
+        for i in range(retries):
+            if color:
+                template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), cv2.IMREAD_COLOR)
+                match = cv2.matchTemplate(cls.color_screen, template, cv2.TM_CCOEFF_NORMED)
+            else:
+                template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), 0)
+                if template is None:
+                    Logger.log_error("Template image not found: assets/{}/{}.png".format(cls.assets, image))
+                    return None
+                match = cv2.matchTemplate(cls.screen, template, cv2.TM_CCOEFF_NORMED)
+
+            height, width = template.shape[:2]
+            value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]
+
+            if value >= similarity:
+                Logger.log_debug("find {}".format(image))
+                return Region(location[0], location[1], width, height)
+            
+            Logger.log_debug("can't find {}, attempt {}/{}".format(image, i+1, retries))
+            Utils.script_sleep(0.5)
+            Utils.update_screen()
+        
+        Logger.log_warning("Could not find image {} after {} retries. Executing interrupt.".format(image, retries))
+        Utils.button_back()
+        Utils.touch_randomly(Region(860, 440, 200, 200))
+        Utils.update_screen()
+
+        # After interrupt, try one more time.
         if color:
             template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), cv2.IMREAD_COLOR)
             match = cv2.matchTemplate(cls.color_screen, template, cv2.TM_CCOEFF_NORMED)
         else:
             template = cv2.imread('assets/{}/{}.png'.format(cls.assets, image), 0)
+            if template is None:
+                return None # Already logged error
             match = cv2.matchTemplate(cls.screen, template, cv2.TM_CCOEFF_NORMED)
-
+        
         height, width = template.shape[:2]
         value, location = cv2.minMaxLoc(match)[1], cv2.minMaxLoc(match)[3]
+
         if value >= similarity:
             Logger.log_debug("find {}".format(image))
             return Region(location[0], location[1], width, height)
+        
         Logger.log_debug("can't find {}".format(image))
         return None
 

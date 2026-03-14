@@ -177,7 +177,8 @@
       },
       {
         "action": "tap_image",
-        "image": "combat/auto_off"
+        "image": "combat/auto_off",
+        "similarity": 0.7
       },
       {
         "action": "sleep",

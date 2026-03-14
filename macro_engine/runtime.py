@@ -2,6 +2,7 @@ import copy
 import json
 import importlib
 import os
+import queue
 import time
 from random import uniform
 
@@ -54,13 +55,15 @@ class MacroContext(object):
 
 
 class MacroRunner(object):
-    def __init__(self, config, stats, driver=None, event_listener=None, stop_requested=None):
+    def __init__(self, config, stats, driver=None, event_listener=None, stop_requested=None, command_queue=None):
         self.config = config
         self.stats = stats
         self.driver = driver or create_macro_driver(config)
         self.event_listener = event_listener
         self.stop_requested = stop_requested
+        self.command_queue = command_queue
         self._plugin_cache = {}
+        self._context_stack = []
 
     def _emit_event(self, event_type, **payload):
         if self.event_listener is None:
@@ -70,6 +73,7 @@ class MacroRunner(object):
         self.event_listener(event)
 
     def _check_stop_requested(self):
+        self._apply_control_commands()
         if self.stop_requested is not None and self.stop_requested():
             self._emit_event("macro_stopped")
             raise MacroStopRequested()
@@ -126,14 +130,21 @@ class MacroRunner(object):
 
         macro_name = macro.get("name", path)
         Logger.log_msg("Running macro '{}'.".format(macro_name))
-        self._emit_event("macro_start", macro=macro_name, path=path)
+        self._context_stack.append(context)
+        self._emit_event("macro_start", macro=macro_name, path=path, **self._snapshot_context(context))
         try:
             self._run_steps(macro["steps"], context)
         except MacroReturn as signal:
-            self._emit_event("macro_end", macro=macro_name, path=path, result=signal.value)
+            self._emit_event("macro_end", macro=macro_name, path=path, result=signal.value, **self._snapshot_context(context))
             return signal.value
-        self._emit_event("macro_end", macro=macro_name, path=path, result=None)
-        return None
+        else:
+            self._emit_event("macro_end", macro=macro_name, path=path, result=None, **self._snapshot_context(context))
+            return None
+        finally:
+            if self._context_stack and self._context_stack[-1] is context:
+                self._context_stack.pop()
+            else:
+                self._context_stack = [item for item in self._context_stack if item is not context]
 
     def _build_region(self, name, value):
         if not isinstance(value, dict):
@@ -151,7 +162,14 @@ class MacroRunner(object):
     def _run_step(self, step, context, step_path):
         self._check_stop_requested()
         action = step["action"]
-        self._emit_event("step_start", macro=context.macro_path, action=action, step=step, step_path=list(step_path), variables=dict(context.variables))
+        self._emit_event(
+            "step_start",
+            macro=context.macro_path,
+            action=action,
+            step=step,
+            step_path=list(step_path),
+            **self._snapshot_context(context)
+        )
         try:
     
             if action == "log":
@@ -323,7 +341,7 @@ class MacroRunner(object):
             raise MacroValidationError("Unsupported action '{}'.".format(action))
     
         finally:
-            self._emit_event("step_end", macro=context.macro_path, action=action, step=step, variables=dict(context.variables))
+            self._emit_event("step_end", macro=context.macro_path, action=action, step=step, **self._snapshot_context(context))
 
     def _render(self, message, context):
         rendered = str(message)
@@ -363,6 +381,68 @@ class MacroRunner(object):
             if current is None:
                 break
         return current
+
+    def _snapshot_context(self, context):
+        return {
+            "variables": copy.deepcopy(context.variables),
+            "runtime": self._runtime_to_data(context.runtime),
+        }
+
+    def _apply_control_commands(self):
+        if self.command_queue is None or not self._context_stack:
+            return
+
+        while True:
+            try:
+                command = self.command_queue.get_nowait()
+            except queue.Empty:
+                break
+
+            if not isinstance(command, dict) or command.get("type") != "set_context":
+                continue
+
+            context = self._context_stack[-1]
+            source = command.get("source")
+            key = str(command.get("key") or "").strip()
+            value = command.get("value")
+
+            if not key:
+                self._emit_event("context_error", message="Context update requires a key.")
+                continue
+
+            try:
+                if source == "var":
+                    context.variables[key] = value
+                elif source == "runtime":
+                    self._set_nested_value(context.runtime, key, value)
+                else:
+                    raise MacroValidationError("Unsupported context source '{}'.".format(source))
+            except Exception as error:
+                self._emit_event("context_error", message=str(error), source=source, key=key)
+                continue
+
+            self._emit_event(
+                "context_update",
+                source=source,
+                key=key,
+                value=copy.deepcopy(value),
+                **self._snapshot_context(context)
+            )
+
+    def _set_nested_value(self, target, path, value):
+        parts = [part for part in str(path).split(".") if part]
+        if not parts:
+            raise MacroValidationError("Runtime path cannot be empty.")
+        current = target
+        for part in parts[:-1]:
+            next_value = current.get(part)
+            if next_value is None:
+                next_value = {}
+                current[part] = next_value
+            elif not isinstance(next_value, dict):
+                raise MacroValidationError("Runtime path '{}' crosses non-object key '{}'.".format(path, part))
+            current = next_value
+        current[parts[-1]] = value
 
     def _runtime_to_data(self, value):
         if isinstance(value, dict):

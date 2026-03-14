@@ -46,6 +46,7 @@ class MacroViewerApp(object):
         self.available_macro_files = self._list_macro_files()
 
         self.queue = queue.Queue()
+        self.trace_command_queue = queue.Queue()
         self.trace_running = False
         self.trace_stop_requested = False
         self.trace_thread = None
@@ -72,6 +73,8 @@ class MacroViewerApp(object):
         self.tooltip_window = None
         self.tooltip_after_id = None
         self.tooltip_text = None
+        self.trace_runtime = {}
+        self.trace_enabled_vars = {}
 
         self.root.title('ALAuto Macro Viewer')
         self.root.geometry('1760x1020')
@@ -160,6 +163,13 @@ class MacroViewerApp(object):
             font=('Consolas', 10)
         )
         self.template_label.pack(fill='both', expand=True)
+
+        context_panel = ttk.LabelFrame(self.trace_tab, text='Enabled Toggles', padding=8)
+        context_panel.pack(fill='x', pady=(0, 10))
+        self.trace_context_status_var = tk.StringVar(value='Trace not running')
+        ttk.Label(context_panel, textvariable=self.trace_context_status_var, wraplength=390).pack(anchor='w', pady=(0, 8))
+        self.trace_enabled_container = ttk.Frame(context_panel)
+        self.trace_enabled_container.pack(fill='x')
 
         log_panel = ttk.Frame(self.trace_tab)
         log_panel.pack(fill='both', expand=True)
@@ -695,6 +705,9 @@ class MacroViewerApp(object):
         self.macro_var.set(normalized_path)
         self.editor_path_var.set(normalized_path)
         self.config = load_runtime_config(self.runtime_args, normalized_path)
+        self._set_trace_context_snapshot({'runtime': self._runtime_snapshot_from_value(self.config)})
+        if not self.trace_running:
+            self.trace_context_status_var.set('Loaded enabled flags from runtime')
 
     def _editor_load_path(self, path):
         with open(path, 'r', encoding='utf-8-sig') as handle:
@@ -725,6 +738,36 @@ class MacroViewerApp(object):
             json.dump(self.editor_data, handle, ensure_ascii=False, indent=2)
         self._sync_macro_runtime(path)
         self.editor_status_var.set('Saved {}'.format(self.macro_path))
+
+    def _set_editor_runtime_value(self, key, value):
+        if self.editor_data is None:
+            return False
+        runtime = self.editor_data.setdefault('runtime', {})
+        self._set_nested_runtime_value(runtime, key, value)
+        return True
+
+    def _set_nested_runtime_value(self, target, path, value):
+        parts = [part for part in str(path).split('.') if part]
+        if not parts:
+            return
+        current = target
+        for part in parts[:-1]:
+            next_value = current.get(part)
+            if not isinstance(next_value, dict):
+                next_value = {}
+                current[part] = next_value
+            current = next_value
+        current[parts[-1]] = value
+
+    def _persist_enabled_toggle(self, key, value):
+        path = self.editor_path_var.get().strip()
+        if not path or not self._set_editor_runtime_value(key, value):
+            return False
+        with open(path, 'w', encoding='utf-8') as handle:
+            json.dump(self.editor_data, handle, ensure_ascii=False, indent=2)
+        self._sync_macro_runtime(path)
+        self.editor_status_var.set('Saved {}'.format(self.macro_path))
+        return True
 
     def _editor_validate_json(self):
         if self.editor_data is None:
@@ -2966,6 +3009,7 @@ class MacroViewerApp(object):
             return
 
         self.trace_stop_requested = False
+        self.trace_command_queue = queue.Queue()
         self.trace_running = True
         self.trace_button_var.set('Stop Trace')
         self.status_var.set('status: starting trace')
@@ -2984,7 +3028,8 @@ class MacroViewerApp(object):
             stats,
             driver=driver,
             event_listener=self._listener,
-            stop_requested=lambda: self.trace_stop_requested
+            stop_requested=lambda: self.trace_stop_requested,
+            command_queue=self.trace_command_queue
         )
         try:
             runner.run_path(self.macro_path)
@@ -3013,6 +3058,7 @@ class MacroViewerApp(object):
         event_type = event.get('type')
 
         if event_type == 'macro_start':
+            self._set_trace_context_snapshot(event)
             self.status_var.set('status: running {}'.format(event.get('macro')))
             self.trace_current_macro_path = event.get('path')
             self.last_overlay_regions = []
@@ -3021,11 +3067,13 @@ class MacroViewerApp(object):
             return
 
         if event_type == 'macro_end':
+            self._set_trace_context_snapshot(event)
             self.status_var.set('status: finished {} result={}'.format(event.get('macro'), event.get('result')))
             self._append_log('[MACRO] end {} result={}'.format(event.get('macro'), event.get('result')))
             return
 
         if event_type == 'step_start':
+            self._set_trace_context_snapshot(event)
             step = event.get('step', {})
             self.step_var.set('step: {}'.format(self._format_step(step)))
             self._sync_trace_editor_macro(event.get('macro'))
@@ -3033,6 +3081,21 @@ class MacroViewerApp(object):
             if step.get('image'):
                 self._set_current_image(step.get('image'))
             self._append_log('[STEP] {}'.format(self._format_step(step)), limit=120)
+            return
+
+        if event_type == 'step_end':
+            self._set_trace_context_snapshot(event)
+            return
+
+        if event_type == 'context_update':
+            self._set_trace_context_snapshot(event)
+            self.trace_context_status_var.set('Updated: {}={}'.format(event.get('key'), json.dumps(event.get('value'))))
+            self._append_log('[CONTEXT] set {} {}={}'.format(event.get('source'), event.get('key'), self._value_to_editor_text(event.get('value'))), limit=120)
+            return
+
+        if event_type == 'context_error':
+            self.trace_context_status_var.set('Update failed: {}'.format(event.get('message') or 'unknown error'))
+            self._append_log('[ERROR] context update failed: {}'.format(event.get('message') or 'unknown error'))
             return
 
         if event_type == 'screen_update':
@@ -3193,6 +3256,70 @@ class MacroViewerApp(object):
         setattr(self, photo_attr_name, photo)
         label_widget.configure(image=photo, text='')
         label_widget.image = photo
+
+    def _set_trace_context_snapshot(self, event):
+        self.trace_runtime = copy.deepcopy(event.get('runtime') or {})
+        self._render_enabled_toggles(self._collect_enabled_flags(self.trace_runtime))
+
+    def _runtime_snapshot_from_value(self, value):
+        if isinstance(value, dict):
+            return {key: self._runtime_snapshot_from_value(child) for key, child in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [self._runtime_snapshot_from_value(child) for child in value]
+        if hasattr(value, '__dict__'):
+            return {
+                key: self._runtime_snapshot_from_value(child)
+                for key, child in vars(value).items()
+                if not key.startswith('_')
+            }
+        return copy.deepcopy(value)
+
+    def _collect_enabled_flags(self, value, prefix=''):
+        results = []
+        if isinstance(value, dict):
+            for child_key, child_value in value.items():
+                child_prefix = '{}.{}'.format(prefix, child_key) if prefix else child_key
+                if child_key == 'enabled':
+                    results.append((child_prefix, bool(child_value)))
+                results.extend(self._collect_enabled_flags(child_value, child_prefix))
+        elif isinstance(value, list):
+            for index, child_value in enumerate(value):
+                child_prefix = '{}[{}]'.format(prefix, index)
+                results.extend(self._collect_enabled_flags(child_value, child_prefix))
+        return results
+
+    def _render_enabled_toggles(self, flags):
+        for child in self.trace_enabled_container.winfo_children():
+            child.destroy()
+        self.trace_enabled_vars = {}
+        if not flags:
+            ttk.Label(self.trace_enabled_container, text='No enabled flags found in runtime.').pack(anchor='w')
+            return
+        for key, value in sorted(flags):
+            var = tk.BooleanVar(value=value)
+            self.trace_enabled_vars[key] = var
+            ttk.Checkbutton(
+                self.trace_enabled_container,
+                text=key,
+                variable=var,
+                command=lambda path=key, state_var=var: self._apply_enabled_toggle(path, state_var)
+            ).pack(anchor='w')
+
+    def _apply_enabled_toggle(self, key, state_var):
+        value = bool(state_var.get())
+        if not self._persist_enabled_toggle(key, value):
+            self.trace_context_status_var.set('Failed to save {}={}'.format(key, str(value).lower()))
+            return
+        if self.trace_running:
+            self.trace_command_queue.put({
+                'type': 'set_context',
+                'source': 'runtime',
+                'key': key,
+                'value': value,
+            })
+            self.trace_context_status_var.set('Saved and queued: {}={}'.format(key, str(value).lower()))
+        else:
+            self.trace_context_status_var.set('Saved: {}={}'.format(key, str(value).lower()))
 
     def _append_log(self, line, limit=200):
         self.log_lines.append(line)

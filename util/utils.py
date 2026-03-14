@@ -97,6 +97,7 @@ class Utils(object):
     DEFAULT_SIMILARITY = 0.95
     assets = ''
     locations = ()
+    SCREENCAP_RETRIES = 3
 
     @classmethod
     def init_screencap_mode(cls,mode):
@@ -151,6 +152,20 @@ class Utils(object):
             thread.join()
 
     @staticmethod
+    def _decode_image_buffer(image_bytes, flags, source_name):
+        if not image_bytes:
+            raise ValueError('{} returned an empty image buffer'.format(source_name))
+
+        image_array = numpy.frombuffer(image_bytes, dtype=numpy.uint8)
+        if image_array.size == 0:
+            raise ValueError('{} returned an empty numpy buffer'.format(source_name))
+
+        decoded = cv2.imdecode(image_array, flags)
+        if decoded is None:
+            raise ValueError('{} returned undecodable image data'.format(source_name))
+        return decoded
+
+    @staticmethod
     def script_sleep(base=None, flex=None):
         """Method for putting the program to sleep for a random amount of time.
         If base is not provided, defaults to somewhere along with 0.3 and 0.7
@@ -183,61 +198,75 @@ class Utils(object):
         global screen
         screen = None
         color_screen = None
-        while color_screen is None:
-            if Adb.legacy:
-                color_screen = cv2.imdecode(
-                    numpy.fromstring(Adb.exec_out(r"screencap -p | sed s/\r\n/\n/"), dtype=numpy.uint8),
-                    cv2.IMREAD_COLOR)
-            else:
-                if cls.screencap_mode == consts.SCREENCAP_PNG:
-                    start_time = time.perf_counter()
-                    color_screen = cv2.imdecode(numpy.frombuffer(Adb.exec_out('screencap -p'), dtype=numpy.uint8),
-                                                cv2.IMREAD_COLOR)
-                    elapsed_time = time.perf_counter() - start_time
-                    Logger.log_debug("SCREENCAP_PNG took {} ms to complete.".format('%.2f' % (elapsed_time * 1000)))
-                elif cls.screencap_mode == consts.SCREENCAP_RAW:
-                    start_time = time.perf_counter()
-                    pixel_size = 4
-
-                    byte_arr = Adb.exec_out('screencap')
-                    header_format = 'III'
-                    header_size = struct.calcsize(header_format)
-                    if len(byte_arr) < header_size:
-                        continue
-                    header = struct.unpack(header_format, byte_arr[:header_size])
-                    width = header[0]
-                    height = header[1]
-                    if len(byte_arr) != header_size + width * height * pixel_size:
-                        continue
-                    tmp = numpy.frombuffer(byte_arr, dtype=numpy.uint8, count=width * height * 4, offset=header_size)
-                    rgb_img = tmp.reshape((height, width, -1))
-                    color_screen = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
-                    elapsed_time = time.perf_counter() - start_time
-                    Logger.log_debug("SCREENCAP_RAW took {} ms to complete.".format('%.2f' % (elapsed_time * 1000)))
-                elif cls.screencap_mode == consts.ASCREENCAP:
-                    start_time = time.perf_counter()
-                    raw_compressed_data = Utils.reposition_byte_pointer(
-                        Adb.exec_out('/data/local/tmp/ascreencap --pack 2 --stdout'))
-                    compressed_data_header = numpy.frombuffer(raw_compressed_data[0:20], dtype=numpy.uint32)
-                    if compressed_data_header[0] != 828001602:
-                        compressed_data_header = compressed_data_header.byteswap()
-                        if compressed_data_header[0] != 828001602:
-                            Logger.log_error('If error persists, disable aScreenCap and report traceback')
-                            raise Exception(
-                                'aScreenCap header verification failure, corrupted image received. HEADER IN HEX = {}'.format(
-                                    compressed_data_header.tobytes().hex()))
-                    uncompressed_data_size = compressed_data_header[1].item()
-                    color_screen = cv2.imdecode(numpy.frombuffer(
-                        lz4.block.decompress(raw_compressed_data[20:], uncompressed_size=uncompressed_data_size),
-                        dtype=numpy.uint8), cv2.IMREAD_COLOR)
-                    elapsed_time = time.perf_counter() - start_time
-                    Logger.log_debug("aScreenCap took {} ms to complete.".format('%.2f' % (elapsed_time * 1000)))
+        for attempt in range(cls.SCREENCAP_RETRIES):
+            try:
+                if Adb.legacy:
+                    color_screen = cls._decode_image_buffer(
+                        Adb.exec_out(r"screencap -p | sed s/\r\n/\n/"),
+                        cv2.IMREAD_COLOR,
+                        'legacy screencap')
                 else:
-                    raise Exception('Unknown screencap mode')
+                    if cls.screencap_mode == consts.SCREENCAP_PNG:
+                        start_time = time.perf_counter()
+                        color_screen = cls._decode_image_buffer(
+                            Adb.exec_out('screencap -p'),
+                            cv2.IMREAD_COLOR,
+                            'SCREENCAP_PNG')
+                        elapsed_time = time.perf_counter() - start_time
+                        Logger.log_debug("SCREENCAP_PNG took {} ms to complete.".format('%.2f' % (elapsed_time * 1000)))
+                    elif cls.screencap_mode == consts.SCREENCAP_RAW:
+                        start_time = time.perf_counter()
+                        pixel_size = 4
+
+                        byte_arr = Adb.exec_out('screencap')
+                        header_format = 'III'
+                        header_size = struct.calcsize(header_format)
+                        if len(byte_arr) < header_size:
+                            raise ValueError('SCREENCAP_RAW returned an incomplete header')
+                        header = struct.unpack(header_format, byte_arr[:header_size])
+                        width = header[0]
+                        height = header[1]
+                        if len(byte_arr) != header_size + width * height * pixel_size:
+                            raise ValueError('SCREENCAP_RAW returned an unexpected payload length')
+                        tmp = numpy.frombuffer(byte_arr, dtype=numpy.uint8, count=width * height * 4, offset=header_size)
+                        rgb_img = tmp.reshape((height, width, -1))
+                        color_screen = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
+                        elapsed_time = time.perf_counter() - start_time
+                        Logger.log_debug("SCREENCAP_RAW took {} ms to complete.".format('%.2f' % (elapsed_time * 1000)))
+                    elif cls.screencap_mode == consts.ASCREENCAP:
+                        start_time = time.perf_counter()
+                        raw_compressed_data = Utils.reposition_byte_pointer(
+                            Adb.exec_out('/data/local/tmp/ascreencap --pack 2 --stdout'))
+                        compressed_data_header = numpy.frombuffer(raw_compressed_data[0:20], dtype=numpy.uint32)
+                        if compressed_data_header[0] != 828001602:
+                            compressed_data_header = compressed_data_header.byteswap()
+                            if compressed_data_header[0] != 828001602:
+                                Logger.log_error('If error persists, disable aScreenCap and report traceback')
+                                raise Exception(
+                                    'aScreenCap header verification failure, corrupted image received. HEADER IN HEX = {}'.format(
+                                        compressed_data_header.tobytes().hex()))
+                        uncompressed_data_size = compressed_data_header[1].item()
+                        color_screen = cls._decode_image_buffer(
+                            lz4.block.decompress(raw_compressed_data[20:], uncompressed_size=uncompressed_data_size),
+                            cv2.IMREAD_COLOR,
+                            'aScreenCap')
+                        elapsed_time = time.perf_counter() - start_time
+                        Logger.log_debug("aScreenCap took {} ms to complete.".format('%.2f' % (elapsed_time * 1000)))
+                    else:
+                        raise Exception('Unknown screencap mode')
+            except (cv2.error, ValueError, lz4.block.LZ4BlockError) as exc:
+                Logger.log_warning(
+                    "Screenshot decode failed ({}/{}): {}".format(attempt + 1, cls.SCREENCAP_RETRIES, exc))
+                color_screen = None
+                if attempt + 1 >= cls.SCREENCAP_RETRIES:
+                    raise
+                time.sleep(0.1)
+                continue
 
             screen = cv2.cvtColor(color_screen, cv2.COLOR_BGR2GRAY)
             cls.color_screen = color_screen
             cls.screen = screen
+            break
 
     @classmethod
     def wait_update_screen(cls, time=None):
@@ -262,11 +291,20 @@ class Utils(object):
         """
         color_screen = None
         while color_screen is None:
-            if Adb.legacy:
-                color_screen = cv2.imdecode(
-                    numpy.fromstring(Adb.exec_out(r"screencap -p | sed s/\r\n/\n/"), dtype=numpy.uint8), 1)
-            else:
-                color_screen = cv2.imdecode(numpy.fromstring(Adb.exec_out('screencap -p'), dtype=numpy.uint8), 1)
+            try:
+                if Adb.legacy:
+                    color_screen = Utils._decode_image_buffer(
+                        Adb.exec_out(r"screencap -p | sed s/\r\n/\n/"),
+                        cv2.IMREAD_COLOR,
+                        'legacy screencap')
+                else:
+                    color_screen = Utils._decode_image_buffer(
+                        Adb.exec_out('screencap -p'),
+                        cv2.IMREAD_COLOR,
+                        'SCREENCAP_PNG')
+            except (cv2.error, ValueError) as exc:
+                Logger.log_warning("get_color_screen retrying after decode failure: {}".format(exc))
+                time.sleep(0.1)
         return color_screen
 
     @classmethod

@@ -37,10 +37,11 @@ def load_bgr_image(path):
 class MacroViewerApp(object):
     QUEUE_POLL_MS = 100
 
-    def __init__(self, root, config, macro_path):
+    def __init__(self, root, config, macro_path, runtime_args=None):
         self.root = root
         self.config = config
         self.macro_path = macro_path
+        self.runtime_args = runtime_args or argparse.Namespace(config=None, debug=False, legacy=False)
         self.asset_keys = self._load_asset_keys()
         self.available_macro_files = self._list_macro_files()
 
@@ -688,11 +689,18 @@ class MacroViewerApp(object):
         if path:
             self._editor_load_path(path)
 
+    def _sync_macro_runtime(self, path):
+        normalized_path = os.path.abspath(path)
+        self.macro_path = normalized_path
+        self.macro_var.set(normalized_path)
+        self.editor_path_var.set(normalized_path)
+        self.config = load_runtime_config(self.runtime_args, normalized_path)
+
     def _editor_load_path(self, path):
         with open(path, 'r', encoding='utf-8-sig') as handle:
             self.editor_data = normalize_macro(json.load(handle))
-        self.editor_path_var.set(path)
-        self.editor_status_var.set('Loaded {}'.format(path))
+        self._sync_macro_runtime(path)
+        self.editor_status_var.set('Loaded {}'.format(self.macro_path))
         self.available_macro_files = self._list_macro_files()
         self._set_editor_image_preview(None)
         self._refresh_editor_structure()
@@ -715,7 +723,8 @@ class MacroViewerApp(object):
             return
         with open(path, 'w', encoding='utf-8') as handle:
             json.dump(self.editor_data, handle, ensure_ascii=False, indent=2)
-        self.editor_status_var.set('Saved {}'.format(path))
+        self._sync_macro_runtime(path)
+        self.editor_status_var.set('Saved {}'.format(self.macro_path))
 
     def _editor_validate_json(self):
         if self.editor_data is None:
@@ -2960,15 +2969,18 @@ class MacroViewerApp(object):
         self.trace_running = True
         self.trace_button_var.set('Stop Trace')
         self.status_var.set('status: starting trace')
-        self.macro_path = self.macro_var.get().strip() or self.macro_path
+        current_path = self.editor_path_var.get().strip() or self.macro_var.get().strip() or self.macro_path
+        self._sync_macro_runtime(current_path)
         self.trace_thread = threading.Thread(target=self._run_macro, daemon=True)
         self.trace_thread.start()
 
     def _run_macro(self):
-        stats = Stats(self.config)
-        driver = create_runtime_driver(self.config)
+        current_config = load_runtime_config(self.runtime_args, self.macro_path)
+        self.config = current_config
+        stats = Stats(current_config)
+        driver = create_runtime_driver(current_config)
         runner = MacroRunner(
-            self.config,
+            current_config,
             stats,
             driver=driver,
             event_listener=self._listener,
@@ -3372,7 +3384,7 @@ def main():
     config = load_runtime_config(args, args.macro)
     create_runtime_driver(config)
     root = tk.Tk()
-    MacroViewerApp(root, config, args.macro)
+    MacroViewerApp(root, config, args.macro, runtime_args=args)
     root.mainloop()
 
 

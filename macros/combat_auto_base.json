@@ -7,95 +7,86 @@
       "message": "Starting base combat automation."
     },
     {
-      "action": "while",
-      "steps": [
-        {
-          "action": "wait_for",
-          "condition": {
-            "type": "any",
-            "items": [
-              {
-                "type": "image",
-                "image": "combat/retirement"
-              },
-              {
-                "type": "image",
-                "image": "combat/repeat"
-              }
-            ]
-          },
-          "timeout_steps": [
-            {
-              "action": "log",
-              "message": "Timed out waiting for combat/retirement or combat/repeat."
-            }
-          ],
-          "timeout": 300,
-          "poll_seconds": 30
-        },
-        {
-          "action": "if",
-          "condition": {
+      "action": "sleep",
+      "seconds": 5
+    },
+    {
+      "action": "wait_for",
+      "condition": {
+        "type": "any",
+        "items": [
+          {
             "type": "image",
             "image": "combat/retirement"
           },
-          "steps": [
-            {
-              "action": "call",
-              "routine": "retirement"
-            },
-            {
-              "action": "continue"
-            }
-          ],
-          "else_steps": [
-            {
-              "action": "if",
-              "condition": {
-                "type": "image",
-                "image": "combat/alert_morale_low",
-                "use_mask": true,
-                "similarity": 0.9
-              },
-              "steps": [
-                {
-                  "action": "set",
-                  "value": {
-                    "ref": "stats",
-                    "key": "combat_done"
-                  },
-                  "var": "combat_done_count"
-                },
-                {
-                  "action": "log",
-                  "message": "Morale warning detected. Combat completed so far: {{combat_done_count}}. Stopping combat automation."
-                },
-                {
-                  "action": "return",
-                  "value": false
-                }
-              ]
-            },
-            {
-              "action": "tap_image",
-              "image": "combat/repeat"
-            },
-            {
-              "action": "sleep",
-              "seconds": 1
-            }
-          ]
+          {
+            "type": "image",
+            "image": "combat/repeat"
+          },
+          {
+            "type": "image",
+            "image": "combat/alert_morale_low"
+          },
+          {
+            "type": "image",
+            "image": "combat/alert_unable_battle"
+          }
+        ]
+      },
+      "timeout_steps": [
+        {
+          "action": "log",
+          "message": "Timed out waiting for combat/retirement or combat/repeat."
         }
       ],
-      "condition": {
-        "type": "always",
-        "image": "menu/confirm",
-        "value": true
-      }
+      "timeout": 300,
+      "poll_seconds": 30
     },
     {
-      "action": "sleep",
-      "seconds": 5
+      "action": "if",
+      "condition": {
+        "type": "any",
+        "items": [
+          {
+            "type": "image",
+            "image": "combat/alert_morale_low",
+            "use_mask": true,
+            "similarity": 0.9
+          },
+          {
+            "type": "image",
+            "image": "combat/alert_unable_battle",
+            "use_mask": true,
+            "similarity": 0.9
+          }
+        ]
+      },
+      "steps": [
+        {
+          "action": "return",
+          "value": false
+        }
+      ]
+    },
+    {
+      "action": "if",
+      "condition": {
+        "type": "image",
+        "image": "combat/retirement"
+      },
+      "steps": [
+        {
+          "action": "call",
+          "routine": "retirement"
+        },
+        {
+          "action": "continue"
+        }
+      ]
+    },
+    {
+      "action": "tap_image",
+      "image": "combat/repeat"
     }
   ],
   "routines": {
@@ -174,6 +165,13 @@
       {
         "action": "sleep",
         "seconds": 3
+      },
+      {
+        "action": "update_screen"
+      },
+      {
+        "action": "sleep",
+        "seconds": 2
       },
       {
         "action": "tap_image",

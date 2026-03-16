@@ -82,7 +82,7 @@
     "12Hours": false
   },
   "events": {
-    "enabled": false,
+    "enabled": true,
     "name": "Royal_Maids",
     "levels": [
       "EX",

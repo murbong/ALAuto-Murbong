@@ -2,6 +2,7 @@ import json
 import os
 import re
 import traceback
+from copy import deepcopy
 
 from macro_engine.driver import create_macro_driver
 from util.adb import Adb
@@ -30,15 +31,48 @@ def load_macro_file(path):
         return json.load(handle)
 
 
+def _config_to_dict(config):
+    return {
+        'driver': deepcopy(getattr(config, 'driver', {})),
+        'network': deepcopy(getattr(config, 'network', {})),
+        'screenshot': {
+            'mode': str(getattr(config, 'screenshot', {}).get('mode', ''))
+        },
+        'assets': deepcopy(getattr(config, 'assets', {})),
+        'updates': deepcopy(getattr(config, 'updates', {})),
+        'combat': deepcopy(getattr(config, 'combat', {})),
+        'commissions': deepcopy(getattr(config, 'commissions', {})),
+        'enhancement': deepcopy(getattr(config, 'enhancement', {})),
+        'missions': deepcopy(getattr(config, 'missions', {})),
+        'retirement': deepcopy(getattr(config, 'retirement', {})),
+        'dorm': deepcopy(getattr(config, 'dorm', {})),
+        'academy': deepcopy(getattr(config, 'academy', {})),
+        'research': deepcopy(getattr(config, 'research', {})),
+        'events': deepcopy(getattr(config, 'events', {})),
+    }
+
+
+def _merge_dicts(base, override):
+    merged = deepcopy(base)
+    for key, value in (override or {}).items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_dicts(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
+
+
 def load_runtime_config(args, macro_path=None):
+    base_config = load_config(args)
     if macro_path and os.path.exists(macro_path):
         macro = load_macro_file(macro_path)
         runtime = macro.get('runtime')
         if isinstance(runtime, dict):
-            config = Config.from_dict(runtime, source=macro_path + ':runtime')
+            merged_runtime = _merge_dicts(_config_to_dict(base_config), runtime)
+            config = Config.from_dict(merged_runtime, source=macro_path + ':runtime')
             _apply_cli_runtime_flags(args)
             return config
-    return load_config(args)
+    return base_config
 
 
 def initialize_adb(config):

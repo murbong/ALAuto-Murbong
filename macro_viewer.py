@@ -15,6 +15,7 @@ import numpy
 from macro_engine.runtime import MacroRunner
 from macro_engine.schema import MacroSchemaError, normalize_macro
 from macro_engine.runtime_bootstrap import create_runtime_driver, load_runtime_config, write_traceback
+from util.config import Config
 from util.stats import Stats
 from util.utils import Utils
 
@@ -75,6 +76,7 @@ class MacroViewerApp(object):
         self.tooltip_text = None
         self.trace_runtime = {}
         self.trace_enabled_vars = {}
+        self.trace_runtime_overrides = {}
 
         self.root.title('ALAuto Macro Viewer')
         self.root.geometry('1760x1020')
@@ -690,9 +692,10 @@ class MacroViewerApp(object):
         )
         if not path:
             return
-        self.macro_path = path
-        self.macro_var.set(path)
-        self._editor_load_path(path)
+        normalized_path = os.path.abspath(path)
+        self.macro_path = normalized_path
+        self.macro_var.set(normalized_path)
+        self._editor_load_path(normalized_path)
 
     def _editor_open_file(self):
         path = filedialog.askopenfilename(title='Open macro JSON', filetypes=[('JSON files', '*.json'), ('All files', '*.*')])
@@ -701,19 +704,19 @@ class MacroViewerApp(object):
 
     def _sync_macro_runtime(self, path):
         normalized_path = os.path.abspath(path)
-        self.macro_path = normalized_path
-        self.macro_var.set(normalized_path)
-        self.editor_path_var.set(normalized_path)
         self.config = load_runtime_config(self.runtime_args, normalized_path)
+        self._apply_runtime_overrides_to_config()
         self._set_trace_context_snapshot({'runtime': self._runtime_snapshot_from_value(self.config)})
         if not self.trace_running:
             self.trace_context_status_var.set('Loaded enabled flags from runtime')
 
     def _editor_load_path(self, path):
-        with open(path, 'r', encoding='utf-8-sig') as handle:
+        normalized_path = os.path.abspath(path)
+        with open(normalized_path, 'r', encoding='utf-8-sig') as handle:
             self.editor_data = normalize_macro(json.load(handle))
-        self._sync_macro_runtime(path)
-        self.editor_status_var.set('Loaded {}'.format(self.macro_path))
+        self.editor_path_var.set(normalized_path)
+        self._sync_macro_runtime(normalized_path)
+        self.editor_status_var.set('Loaded {}'.format(normalized_path))
         self.available_macro_files = self._list_macro_files()
         self._set_editor_image_preview(None)
         self._refresh_editor_structure()
@@ -737,12 +740,14 @@ class MacroViewerApp(object):
         with open(path, 'w', encoding='utf-8') as handle:
             json.dump(self.editor_data, handle, ensure_ascii=False, indent=2)
         self._sync_macro_runtime(path)
-        self.editor_status_var.set('Saved {}'.format(self.macro_path))
+        self.editor_status_var.set('Saved {}'.format(os.path.abspath(path)))
 
     def _set_editor_runtime_value(self, key, value):
         if self.editor_data is None:
             return False
-        runtime = self.editor_data.setdefault('runtime', {})
+        runtime = self.editor_data.get('runtime')
+        if not isinstance(runtime, dict):
+            return False
         self._set_nested_runtime_value(runtime, key, value)
         return True
 
@@ -766,7 +771,7 @@ class MacroViewerApp(object):
         with open(path, 'w', encoding='utf-8') as handle:
             json.dump(self.editor_data, handle, ensure_ascii=False, indent=2)
         self._sync_macro_runtime(path)
-        self.editor_status_var.set('Saved {}'.format(self.macro_path))
+        self.editor_status_var.set('Saved {}'.format(os.path.abspath(path)))
         return True
 
     def _editor_validate_json(self):
@@ -1946,8 +1951,9 @@ class MacroViewerApp(object):
 
     def _refresh_condition_form_controls(self):
         condition_type = self.condition_type_var.get().strip()
-        config = self._condition_form_config(condition_type)
         composite_visible = condition_type in ('all', 'any', 'not')
+        editor_condition_type = self._current_condition_editor_type()
+        config = self._condition_form_config(editor_condition_type)
         visible_fields = config['visible_fields']
         hint = config['hint']
 
@@ -1988,6 +1994,16 @@ class MacroViewerApp(object):
             self.condition_items_frame.pack_forget()
         self.condition_form_hint_var.set(hint)
 
+    def _current_condition_editor_type(self):
+        condition_type = self.condition_type_var.get().strip()
+        if condition_type not in ('all', 'any', 'not'):
+            return condition_type
+        if self.condition_item_index is None or not (0 <= self.condition_item_index < len(self.condition_items)):
+            return condition_type
+        item = self.condition_items[self.condition_item_index]
+        target = item.get('item') if item.get('type') == 'not' and isinstance(item.get('item'), dict) else item
+        return target.get('type', condition_type)
+
     def _refresh_condition_items_list(self):
         self.condition_items_list.delete(0, tk.END)
         for index, item in enumerate(self.condition_items):
@@ -2010,11 +2026,23 @@ class MacroViewerApp(object):
     def _load_condition_item_into_fields(self, condition):
         target = condition.get('item') if condition.get('type') == 'not' and isinstance(condition.get('item'), dict) else condition
         self.condition_field_vars['image'].set(target.get('image', ''))
+        self.condition_field_vars['similarity'].set('' if target.get('similarity') is None else str(target.get('similarity')))
+        self.condition_field_vars['color'].set('true' if target.get('color') else 'false')
+        self.condition_field_vars['interrupt_if_not_found'].set('true' if target.get('interrupt_if_not_found') else 'false')
+        self.condition_field_vars['x_between'].set(self._value_to_editor_text(target.get('x_between')) if 'x_between' in target else '')
+        self.condition_field_vars['y_between'].set(self._value_to_editor_text(target.get('y_between')) if 'y_between' in target else '')
         self.condition_field_vars['source'].set(target.get('source', 'var'))
         self.condition_field_vars['key'].set(target.get('key', ''))
         self.condition_field_vars['op'].set(target.get('op', 'truthy'))
         self.condition_field_vars['value'].set(self._value_to_editor_text(target.get('value')))
         self.condition_field_vars['region'].set(json.dumps(target.get('region', {}), ensure_ascii=False) if target.get('region') else '')
+        self.condition_field_vars['channel'].set('' if target.get('channel') is None else str(target.get('channel')))
+        match = target.get('match') or {}
+        self.condition_field_vars['match_low'].set(self._value_to_editor_text(match.get('low')) if 'low' in match else '')
+        self.condition_field_vars['match_high'].set(self._value_to_editor_text(match.get('high')) if 'high' in match else '')
+        self.condition_field_vars['plugin'].set(target.get('plugin', ''))
+        self.condition_field_vars['payload_json'].set(self._value_to_editor_text(self._condition_plugin_payload(target)))
+        self._refresh_condition_form_controls()
 
     def _store_current_condition_item(self):
         condition_type = self.condition_type_var.get().strip()
@@ -3013,29 +3041,46 @@ class MacroViewerApp(object):
         self.trace_running = True
         self.trace_button_var.set('Stop Trace')
         self.status_var.set('status: starting trace')
-        current_path = self.editor_path_var.get().strip() or self.macro_var.get().strip() or self.macro_path
+        current_path = self.macro_var.get().strip() or self.macro_path or self.editor_path_var.get().strip()
         self._sync_macro_runtime(current_path)
-        self.trace_thread = threading.Thread(target=self._run_macro, daemon=True)
+        self.trace_thread = threading.Thread(target=self._run_macro, args=(os.path.abspath(current_path),), daemon=True)
         self.trace_thread.start()
 
-    def _run_macro(self):
-        current_config = load_runtime_config(self.runtime_args, self.macro_path)
-        self.config = current_config
-        stats = Stats(current_config)
-        driver = create_runtime_driver(current_config)
-        runner = MacroRunner(
-            current_config,
-            stats,
-            driver=driver,
-            event_listener=self._listener,
-            stop_requested=lambda: self.trace_stop_requested,
-            command_queue=self.trace_command_queue
-        )
+    def _run_macro(self, macro_path):
         try:
-            runner.run_path(self.macro_path)
+            if self.trace_stop_requested:
+                self.queue.put({'type': 'worker_done', 'status': 'stopped'})
+                return
+            current_config = load_runtime_config(self.runtime_args, macro_path)
+            if self.trace_runtime_overrides:
+                runtime_data = self._runtime_snapshot_from_value(current_config)
+                for key, value in self.trace_runtime_overrides.items():
+                    self._set_nested_runtime_value(runtime_data, key, value)
+                current_config = Config.from_dict(runtime_data, source=macro_path + ':viewer-runtime')
+            if self.trace_stop_requested:
+                self.queue.put({'type': 'worker_done', 'status': 'stopped'})
+                return
+            self.config = current_config
+            stats = Stats(current_config)
+            driver = create_runtime_driver(current_config)
+            if self.trace_stop_requested:
+                self.queue.put({'type': 'worker_done', 'status': 'stopped'})
+                return
+            runner = MacroRunner(
+                current_config,
+                stats,
+                driver=driver,
+                event_listener=self._listener,
+                stop_requested=lambda: self.trace_stop_requested,
+                command_queue=self.trace_command_queue
+            )
+            runner.run_path(macro_path)
             self.queue.put({'type': 'worker_done', 'status': 'completed'})
-        except Exception as error:
+        except BaseException as error:
             if error.__class__.__name__ == 'MacroStopRequested':
+                self.queue.put({'type': 'worker_done', 'status': 'stopped'})
+                return
+            if isinstance(error, SystemExit) and self.trace_stop_requested:
                 self.queue.put({'type': 'worker_done', 'status': 'stopped'})
                 return
             write_traceback()
@@ -3261,6 +3306,14 @@ class MacroViewerApp(object):
         self.trace_runtime = copy.deepcopy(event.get('runtime') or {})
         self._render_enabled_toggles(self._collect_enabled_flags(self.trace_runtime))
 
+    def _apply_runtime_overrides_to_config(self):
+        if not self.trace_runtime_overrides:
+            return
+        runtime_data = self._runtime_snapshot_from_value(self.config)
+        for key, value in self.trace_runtime_overrides.items():
+            self._set_nested_runtime_value(runtime_data, key, value)
+        self.config = Config.from_dict(runtime_data, source=getattr(self.config, 'source', '<viewer-runtime>'))
+
     def _runtime_snapshot_from_value(self, value):
         if isinstance(value, dict):
             return {key: self._runtime_snapshot_from_value(child) for key, child in value.items()}
@@ -3307,9 +3360,10 @@ class MacroViewerApp(object):
 
     def _apply_enabled_toggle(self, key, state_var):
         value = bool(state_var.get())
-        if not self._persist_enabled_toggle(key, value):
-            self.trace_context_status_var.set('Failed to save {}={}'.format(key, str(value).lower()))
-            return
+        self.trace_runtime_overrides[key] = value
+        persisted = self._persist_enabled_toggle(key, value)
+        self._apply_runtime_overrides_to_config()
+        self._set_trace_context_snapshot({'runtime': self._runtime_snapshot_from_value(self.config)})
         if self.trace_running:
             self.trace_command_queue.put({
                 'type': 'set_context',
@@ -3317,9 +3371,11 @@ class MacroViewerApp(object):
                 'key': key,
                 'value': value,
             })
-            self.trace_context_status_var.set('Saved and queued: {}={}'.format(key, str(value).lower()))
+            status_prefix = 'Saved and queued' if persisted else 'Queued (viewer only)'
+            self.trace_context_status_var.set('{}: {}={}'.format(status_prefix, key, str(value).lower()))
         else:
-            self.trace_context_status_var.set('Saved: {}={}'.format(key, str(value).lower()))
+            status_prefix = 'Saved' if persisted else 'Staged for trace'
+            self.trace_context_status_var.set('{}: {}={}'.format(status_prefix, key, str(value).lower()))
 
     def _append_log(self, line, limit=200):
         self.log_lines.append(line)

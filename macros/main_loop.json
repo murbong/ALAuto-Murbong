@@ -81,195 +81,249 @@
   },
   "steps": [
     {
-      "action": "if",
+      "action": "while",
       "condition": {
-        "type": "compare",
-        "source": "runtime",
-        "key": "combat.enabled",
-        "op": "equals",
+        "type": "always",
         "value": true
       },
       "steps": [
         {
-          "action": "run_macro",
-          "path": "combat_auto_base.json"
-        }
-      ],
-      "else_steps": [
-        {
-          "action": "while",
+          "action": "if",
           "condition": {
-            "type": "always",
-            "value": true
+            "type": "all",
+            "source": "runtime",
+            "key": "combat.enabled",
+            "op": "equals",
+            "value": true,
+            "items": [
+              {
+                "type": "compare",
+                "source": "runtime",
+                "key": "combat.enabled",
+                "op": "equals",
+                "value": true
+              },
+              {
+                "type": "compare",
+                "source": "var",
+                "key": "combat_result",
+                "op": "not_equals",
+                "value": false
+              }
+            ]
           },
           "steps": [
             {
-              "action": "update_screen"
-            },
-            {
-              "action": "if",
+              "action": "while",
               "condition": {
-                "type": "image",
-                "image": "menu/confirm"
+                "type": "always",
+                "value": true
               },
               "steps": [
                 {
-                  "action": "tap_image",
-                  "image": "menu/confirm"
+                  "action": "run_macro",
+                  "path": "combat_auto_base.json",
+                  "into": "combat_result"
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "compare",
+                    "source": "var",
+                    "key": "combat_result",
+                    "op": "equals",
+                    "value": false
+                  },
+                  "steps": [
+                    {
+                      "action": "log",
+                      "message": "Combat macro returned false. Pausing combat loop."
+                    },
+                    {
+                      "action": "break"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "else_steps": [
+            {
+              "action": "while",
+              "condition": {
+                "type": "always",
+                "value": true
+              },
+              "steps": [
+                {
+                  "action": "update_screen"
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "image",
+                    "image": "menu/confirm"
+                  },
+                  "steps": [
+                    {
+                      "action": "tap_image",
+                      "image": "menu/confirm"
+                    },
+                    {
+                      "action": "sleep",
+                      "seconds": 1
+                    },
+                    {
+                      "action": "continue"
+                    }
+                  ]
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "not",
+                    "item": {
+                      "type": "image",
+                      "image": "menu/button_battle"
+                    }
+                  },
+                  "steps": [
+                    {
+                      "action": "back"
+                    },
+                    {
+                      "action": "sleep",
+                      "seconds": 1
+                    },
+                    {
+                      "action": "continue"
+                    }
+                  ]
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "all",
+                    "items": [
+                      {
+                        "type": "compare",
+                        "source": "runtime",
+                        "key": "commissions.enabled",
+                        "op": "equals",
+                        "value": true
+                      },
+                      {
+                        "type": "image",
+                        "image": "commission/alert_completed"
+                      }
+                    ]
+                  },
+                  "steps": [
+                    {
+                      "action": "run_macro",
+                      "path": "commission_collect.json"
+                    },
+                    {
+                      "action": "print_stats",
+                      "oil_limit": {
+                        "ref": "runtime",
+                        "key": "combat.oil_limit"
+                      }
+                    },
+                    {
+                      "action": "continue"
+                    }
+                  ]
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "all",
+                    "items": [
+                      {
+                        "type": "compare",
+                        "source": "runtime",
+                        "key": "headquarters.enabled",
+                        "op": "equals",
+                        "value": true
+                      },
+                      {
+                        "type": "image",
+                        "image": "headquarters/hq_alert"
+                      }
+                    ]
+                  },
+                  "steps": [
+                    {
+                      "action": "run_macro",
+                      "path": "headquarters.json"
+                    },
+                    {
+                      "action": "continue"
+                    }
+                  ]
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "all",
+                    "items": [
+                      {
+                        "type": "compare",
+                        "source": "runtime",
+                        "key": "research.enabled",
+                        "op": "equals",
+                        "value": true
+                      },
+                      {
+                        "type": "image",
+                        "image": "research/lab_alert"
+                      }
+                    ]
+                  },
+                  "steps": [
+                    {
+                      "action": "run_macro",
+                      "path": "research.json"
+                    },
+                    {
+                      "action": "continue"
+                    }
+                  ]
+                },
+                {
+                  "action": "if",
+                  "condition": {
+                    "type": "all",
+                    "items": [
+                      {
+                        "type": "compare",
+                        "source": "runtime",
+                        "key": "missions.enabled",
+                        "op": "equals",
+                        "value": true
+                      },
+                      {
+                        "type": "image",
+                        "image": "mission/alert_completed"
+                      }
+                    ]
+                  },
+                  "steps": [
+                    {
+                      "action": "run_macro",
+                      "path": "mission_claim.json"
+                    },
+                    {
+                      "action": "continue"
+                    }
+                  ]
                 },
                 {
                   "action": "sleep",
-                  "seconds": 1
-                },
-                {
-                  "action": "continue"
+                  "seconds": 15
                 }
               ]
-            },
-            {
-              "action": "if",
-              "condition": {
-                "type": "not",
-                "item": {
-                  "type": "image",
-                  "image": "menu/button_battle"
-                }
-              },
-              "steps": [
-                {
-                  "action": "back"
-                },
-                {
-                  "action": "sleep",
-                  "seconds": 1
-                },
-                {
-                  "action": "continue"
-                }
-              ]
-            },
-            {
-              "action": "if",
-              "condition": {
-                "type": "all",
-                "items": [
-                  {
-                    "type": "compare",
-                    "source": "runtime",
-                    "key": "commissions.enabled",
-                    "op": "equals",
-                    "value": true
-                  },
-                  {
-                    "type": "image",
-                    "image": "commission/alert_completed"
-                  }
-                ]
-              },
-              "steps": [
-                {
-                  "action": "run_macro",
-                  "path": "commission_collect.json"
-                },
-                {
-                  "action": "print_stats",
-                  "oil_limit": {
-                    "ref": "runtime",
-                    "key": "combat.oil_limit"
-                  }
-                },
-                {
-                  "action": "continue"
-                }
-              ]
-            },
-            {
-              "action": "if",
-              "condition": {
-                "type": "all",
-                "items": [
-                  {
-                    "type": "compare",
-                    "source": "runtime",
-                    "key": "headquarters.enabled",
-                    "op": "equals",
-                    "value": true
-                  },
-                  {
-                    "type": "image",
-                    "image": "headquarters/hq_alert"
-                  }
-                ]
-              },
-              "steps": [
-                {
-                  "action": "run_macro",
-                  "path": "headquarters.json"
-                },
-                {
-                  "action": "continue"
-                }
-              ]
-            },
-            {
-              "action": "if",
-              "condition": {
-                "type": "all",
-                "items": [
-                  {
-                    "type": "compare",
-                    "source": "runtime",
-                    "key": "research.enabled",
-                    "op": "equals",
-                    "value": true
-                  },
-                  {
-                    "type": "image",
-                    "image": "research/lab_alert"
-                  }
-                ]
-              },
-              "steps": [
-                {
-                  "action": "run_macro",
-                  "path": "research.json"
-                },
-                {
-                  "action": "continue"
-                }
-              ]
-            },
-            {
-              "action": "if",
-              "condition": {
-                "type": "all",
-                "items": [
-                  {
-                    "type": "compare",
-                    "source": "runtime",
-                    "key": "missions.enabled",
-                    "op": "equals",
-                    "value": true
-                  },
-                  {
-                    "type": "image",
-                    "image": "mission/alert_completed"
-                  }
-                ]
-              },
-              "steps": [
-                {
-                  "action": "run_macro",
-                  "path": "mission_claim.json"
-                },
-                {
-                  "action": "continue"
-                }
-              ]
-            },
-            {
-              "action": "sleep",
-              "seconds": 15
             }
           ]
         }

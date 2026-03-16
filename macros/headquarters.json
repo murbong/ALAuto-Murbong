@@ -114,6 +114,54 @@
       "y": 600,
       "w": 100,
       "h": 100
+    },
+    "cat_tab": {
+      "x": 861,
+      "y": 544,
+      "w": 228,
+      "h": 307
+    },
+    "cat_confirm": {
+      "x": 1655,
+      "y": 912,
+      "w": 170,
+      "h": 49
+    },
+    "cat_house": {
+      "x": 1250,
+      "y": 882,
+      "w": 119,
+      "h": 116
+    },
+    "cat_clean": {
+      "x": 121,
+      "y": 404,
+      "w": 79,
+      "h": 95
+    },
+    "cat_close": {
+      "x": 1512,
+      "y": 182,
+      "w": 45,
+      "h": 43
+    },
+    "cat_box": {
+      "x": 1481,
+      "y": 897,
+      "w": 149,
+      "h": 119
+    },
+    "cat_purchase": {
+      "x": 1314,
+      "y": 693,
+      "w": 97,
+      "h": 40
+    },
+    "cat_purchase_ok": {
+      "x": 1116,
+      "y": 651,
+      "w": 107,
+      "h": 51
     }
   },
   "routines": {
@@ -477,6 +525,90 @@
             {
               "action": "tap_region",
               "region": "tap_out"
+            }
+          ]
+        },
+        {
+          "action": "if",
+          "condition": {
+            "type": "image",
+            "image": "headquarters/cat_alert"
+          },
+          "steps": [
+            {
+              "action": "tap_region",
+              "region": "cat_tab"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            },
+            {
+              "action": "tap_region",
+              "region": "cat_confirm"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            },
+            {
+              "action": "tap_region",
+              "region": "cat_house"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            },
+            {
+              "action": "repeat",
+              "steps": [
+                {
+                  "action": "tap_region",
+                  "region": "cat_clean"
+                },
+                {
+                  "action": "sleep",
+                  "seconds": 0.5
+                }
+              ],
+              "times": 3
+            },
+            {
+              "action": "tap_region",
+              "region": "cat_close"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            },
+            {
+              "action": "tap_region",
+              "region": "cat_box"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            },
+            {
+              "action": "tap_region",
+              "region": "cat_purchase"
+            },
+            {
+              "action": "sleep",
+              "seconds": 1
+            },
+            {
+              "action": "if",
+              "condition": {
+                "type": "image",
+                "image": "headquarter/cat_purchase_free"
+              },
+              "steps": [
+                {
+                  "action": "tap_region",
+                  "region": "cat_purchase_ok"
+                }
+              ]
             }
           ]
         },
